@@ -8,3 +8,9 @@ the server hosting this page.
 The page connects to the relay broker over secure WebSockets and encrypts every message
 end to end with AES-256-GCM (WebCrypto), so neither this host nor the broker can read
 or control your DeskMate.
+
+## Bluetooth Wi-Fi setup
+
+`setup.html` gives DeskMate a Wi-Fi network over Bluetooth (Web Bluetooth: Chrome or Edge on
+a Mac, PC or Android phone). Pairing uses a 6-digit code shown on DeskMate's screen, and
+DeskMate only accepts a network over that encrypted, paired link.

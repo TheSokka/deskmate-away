@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>DeskMate OS | Bluetooth setup</title>
+<style>
+:root{color-scheme:light dark;--accent:#1a7771}
+*{box-sizing:border-box}body{font:16px/1.45 system-ui,sans-serif;margin:0 auto;max-width:36rem;padding:1rem 1rem 3rem}
+header{padding:.6rem 0;border-bottom:2px solid var(--accent)}h1{margin:0}small{display:block;opacity:.8}
+button{font:inherit;padding:.65rem 1rem;border:0;border-radius:.45rem;color:white;background:var(--accent);font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+section{border:1px solid #8887;border-radius:.6rem;padding:.8rem;margin:1rem 0}h2{font-size:1.05rem;margin:0 0 .5rem}
+label{display:block;margin:.6rem 0}input,select{font:inherit;width:100%;padding:.5rem;margin-top:.2rem;border-radius:.4rem;border:1px solid #8889}
+#status{font-weight:600}#status.bad{color:#c0392b}#status.good{color:#2e9d5a}
+ol{padding-left:1.2rem}
+</style>
+</head>
+<body>
+<header><small>DESKMATE OS 1.6 · BLUETOOTH SETUP</small><h1>Set DeskMate's Wi-Fi</h1></header>
+<section id="unsupported" hidden><h2>This browser can't use Bluetooth</h2>
+<p>Use Chrome or Edge on a Mac, Windows PC or Android phone. On an iPhone, join DeskMate's own Wi-Fi instead (Settings → Phone setup on DeskMate).</p></section>
+<section id="steps">
+<ol>
+<li>On DeskMate, Bluetooth setup is open when it has no Wi-Fi, while phone setup is open, or after <b>Settings → Bluetooth → Wi-Fi setup</b>.</li>
+<li>Click <b>Connect</b>, pick DeskMate, and when your computer asks, type the 6-digit code DeskMate shows.</li>
+<li>Choose your network, enter its password, and click <b>Send</b>. DeskMate keeps up to 4 networks.</li>
+</ol>
+<button id="connect">Connect to DeskMate</button>
+<p id="status" role="status"></p>
+</section>
+<section id="form" hidden>
+<h2>Wi-Fi network</h2>
+<label>Network<select id="network"></select></label>
+<label id="otherLabel" hidden>Network name<input id="other" maxlength="32" autocomplete="off"></label>
+<label>Password<input id="password" type="password" maxlength="63" autocomplete="off" placeholder="Blank for an open network"></label>
+<div style="display:flex;gap:.6rem"><button id="send">Send to DeskMate</button><button id="rescan" type="button">Scan again</button></div>
+</section>
+<script>
+'use strict';
+// Must match Bluetooth.cpp.
+const SERVICE = '8a3e0001-5d2c-4e6b-9f1a-6c0d4b7e2a91';
+const NETWORKS = '8a3e0002-5d2c-4e6b-9f1a-6c0d4b7e2a91';
+const ADD = '8a3e0003-5d2c-4e6b-9f1a-6c0d4b7e2a91';
+const STATE = '8a3e0004-5d2c-4e6b-9f1a-6c0d4b7e2a91';
+const byId = id => document.getElementById(id);
+const text = new TextEncoder(), untext = new TextDecoder();
+let add, networks, device;
+function say(message, kind = '') {
+  byId('status').textContent = message;
+  byId('status').className = kind;
+}
+if (!navigator.bluetooth) {
+  byId('unsupported').hidden = false;
+  byId('connect').disabled = true;
+}
+async function showNetworks() {
+  const list = JSON.parse(untext.decode(await networks.readValue()) || '[]');
+  const select = byId('network');
+  select.replaceChildren();
+  for (const n of list) {
+    const option = document.createElement('option');
+    option.value = n.s;
+    option.textContent = n.s + ' · ' + (n.r > -60 ? 'strong' : n.r > -72 ? 'good' : 'weak') + (n.l ? '' : ' · open');
+    select.append(option);
+  }
+  const other = document.createElement('option');
+  other.value = '';
+  other.textContent = 'Another network…';
+  select.append(other);
+  select.dispatchEvent(new Event('change'));
+  byId('form').hidden = false;
+  say(list.length ? 'Choose your network.' : 'No networks found. Enter one by name, or scan again.');
+}
+function onState(event) {
+  const state = JSON.parse(untext.decode(event.target.value) || '{}');
+  if (state.state === 'scanned') showNetworks().catch(error => say(error.message, 'bad'));
+  else if (state.state === 'scanning') say('DeskMate is looking for networks…');
+  else if (state.state === 'joining') say('DeskMate is joining ' + state.ssid + '…');
+  else if (state.state === 'online') say('Done: DeskMate joined ' + state.ssid + ' at ' + state.ip + '. Open http://deskmate.local on that network.', 'good');
+  else if (state.state === 'failed') say('DeskMate could not join ' + (state.ssid || 'the network') + '. Check the password and try again.', 'bad');
+  else if (state.state === 'locked') say('Bluetooth setup is closed on DeskMate. Open Settings → Bluetooth → Wi-Fi setup there, then send again.', 'bad');
+}
+byId('network').addEventListener('change', () => { byId('otherLabel').hidden = byId('network').value !== ''; });
+byId('connect').addEventListener('click', async () => {
+  try {
+    say('Choose DeskMate in the list…');
+    device = await navigator.bluetooth.requestDevice({filters: [{namePrefix: 'DeskMate'}], optionalServices: [SERVICE]});
+    device.addEventListener('gattserverdisconnected', () => say('Disconnected from DeskMate.', 'bad'));
+    say('Connecting… type the code DeskMate shows if asked.');
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE);
+    add = await service.getCharacteristic(ADD);
+    networks = await service.getCharacteristic(NETWORKS);
+    const state = await service.getCharacteristic(STATE);
+    await state.startNotifications();  // Pairing happens here (the link must be encrypted).
+    state.addEventListener('characteristicvaluechanged', onState);
+    await add.writeValueWithResponse(text.encode('scan'));
+    say('Connected. DeskMate is looking for networks…');
+  } catch (error) {
+    say(error.name === 'NotFoundError' ? 'No DeskMate chosen.' : 'Could not connect: ' + error.message, 'bad');
+  }
+});
+byId('rescan').addEventListener('click', () => add && add.writeValueWithResponse(text.encode('scan')).catch(error => say(error.message, 'bad')));
+byId('send').addEventListener('click', async () => {
+  const ssid = byId('network').value || byId('other').value.trim();
+  const password = byId('password').value;
+  if (!ssid) return say('Enter the network name.', 'bad');
+  if (password && password.length < 8) return say('Wi-Fi passwords are 8 to 63 characters.', 'bad');
+  try {
+    await add.writeValueWithResponse(text.encode(JSON.stringify({ssid, password})));
+    byId('password').value = '';
+    say('Sent. DeskMate is joining ' + ssid + '…');
+  } catch (error) {
+    say('Could not send: ' + error.message, 'bad');
+  }
+});
+</script>
+</body>
+</html>
