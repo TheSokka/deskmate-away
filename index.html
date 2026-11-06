@@ -304,7 +304,9 @@ async function start() {
   }
   if (!window.crypto || !crypto.subtle) { setState('This browser cannot decrypt (needs a secure page)', 'down'); return; }
   key = await crypto.subtle.importKey('raw', hex(config.key), 'AES-GCM', false, ['encrypt', 'decrypt']);
-  const url = config.ws || 'wss://' + config.broker + ':8884/mqtt';
+  // Public brokers' secure WebSocket ports; a private broker can give its own with ws=.
+  const ports = {'broker.emqx.io': 8084, 'test.mosquitto.org': 8081};
+  const url = config.ws || 'wss://' + config.broker + ':' + (ports[config.broker] || 8884) + '/mqtt';
   byId('broker').textContent = new URL(url).host;
   mqtt = new Mqtt(url, {
     state: up => { online = up; if (up) { send('h'); send('l'); } showLive(lastStatus); },
