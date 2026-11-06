@@ -1,7 +1,7 @@
 {
-  "version": "1.6.2",
-  "size": 1678878,
-  "sha256": "5b5ead6b0c3280ab8d73366fd23bc74b0a2fd373a4e3c6ce4829a201d11908f3",
-  "url": "DeskMateOS-1.6.2.bin",
-  "notes": "First signed release from GitHub: update checks and install from Settings."
+  "version": "1.7.0",
+  "size": 1697390,
+  "sha256": "0cd424e36095ffea74e69e4117b0ac1152842f61d58783153d52d00ce98fb0c8",
+  "url": "DeskMateOS-1.7.0.bin",
+  "notes": "New boot face, 4 clock faces, trusted clock, volume and gentle alarms, knob settings, telemetry."
 }
