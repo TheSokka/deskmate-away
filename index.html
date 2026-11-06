@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>DeskMate OS | Away</title>
+<style>
+:root{color-scheme:light dark;--accent:#1a7771}
+*{box-sizing:border-box}body{font:16px/1.45 system-ui,sans-serif;margin:0 auto;max-width:44rem;padding:1rem 1rem 3rem}
+header{padding:.6rem 0;border-bottom:2px solid var(--accent);display:flex;align-items:end;gap:1rem;flex-wrap:wrap}
+header div{flex:1}h1{margin:0}small{display:block;opacity:.8}
+button{font:inherit;padding:.65rem 1rem;border:0;border-radius:.45rem;color:white;background:var(--accent);font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+#screen{display:block;width:100%;max-width:512px;margin:1rem auto .5rem;aspect-ratio:2;image-rendering:pixelated;background:#05070a;border-radius:.7rem;border:3px solid #222;outline:none}
+#screen:focus-visible{border-color:var(--accent)}
+.knob{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;max-width:512px;margin:0 auto}
+.knob button{padding:.7rem .2rem;font-size:.95rem}
+.hint{text-align:center;font-size:.85rem;opacity:.75;margin:.4rem 0 1rem}
+#state{font-size:.9rem}.dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;background:#999;margin-right:.35rem}
+.live .dot{background:#2e9d5a}.down .dot{background:#c0392b}
+section{border:1px solid #8887;border-radius:.6rem;padding:.8rem;margin:1rem 0}h2{font-size:1.05rem;margin:0 0 .5rem}
+progress{width:100%;height:.9rem;accent-color:var(--accent)}
+#log{white-space:pre-wrap;font-size:.8rem;max-height:16rem;overflow:auto;background:#8881;padding:.5rem;border-radius:.4rem;margin:0}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 auto}
+#missing{display:none}
+</style>
+</head>
+<body>
+<header><div><small>DESKMATE OS 1.5 · AWAY</small><h1>DeskMate</h1></div><span id="state"><span class="dot"></span><span id="stateText">Starting…</span></span></header>
+<section id="missing"><h2>This page is not set up</h2>
+<p>At home, open http://deskmate.local, pair that browser, and scan the QR code under “Away from home” with this phone. Or use “Download the away page” on a computer.</p></section>
+<div id="remote">
+<canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
+<div class="knob">
+<button data-input="left" title="Turn left (←)">⟲ Left</button>
+<button data-input="click" title="Click (Enter)">Click</button>
+<button data-input="double" title="Double-click (Space)">Double</button>
+<button data-input="hold" title="Hold (Esc)">Hold</button>
+<button data-input="right" title="Turn right (→)">Right ⟳</button>
+</div>
+<p class="hint">Keys: ← → turn · Enter click · Space double · Esc hold · mouse wheel over the screen turns</p>
+<section><h2>Firmware update</h2>
+<div class="row"><input id="firmware" type="file" accept=".bin,application/octet-stream"><button id="upload">Upload and install</button></div>
+<progress id="uploadProgress" max="100" value="0" hidden></progress>
+<p id="uploadResult" role="status"></p>
+<small>Sent in encrypted pieces through the relay, so it takes a minute or two. DeskMate checks the image, installs it, and rolls back on its own if the new version fails.</small>
+</section>
+<section><h2>Event log</h2><pre id="log">Waiting for DeskMate…</pre></section>
+<small>End-to-end encrypted: the relay (<span id="broker"></span>) only passes along data it cannot read. Your link (or file) holds DeskMate's key, so keep it private. <a href="#" id="forgetAway">Forget DeskMate on this device</a></small>
+</div>
+<script>
+'use strict';
+const embedded = /*DESKMATE_CONFIG*/null;
+const byId = id => document.getElementById(id);
+const text = new TextEncoder(), untext = new TextDecoder();
+function fromFragment() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (!p.get('id') || !p.get('key')) return null;
+  return {id: p.get('id'), key: p.get('key'), broker: p.get('broker') || 'broker.hivemq.com', ws: p.get('ws') || '',
+          user: p.get('user') || '', pass: p.get('pass') || ''};
+}
+// Hosted copy: the link from DeskMate's QR code carries the settings after the #. They are
+// also remembered on this device, for when the page is opened without them.
+function remembered() {
+  try { return JSON.parse(localStorage.getItem('deskmateAway') || 'null'); } catch (_) { return null; }
+}
+let config = embedded && embedded.id ? embedded : fromFragment();
+if (!(embedded && embedded.id)) {
+  if (config) { try { localStorage.setItem('deskmateAway', JSON.stringify(config)); } catch (_) {} }
+  else config = remembered();
+}
+function setState(message, kind) {
+  byId('stateText').textContent = message;
+  byId('state').className = kind || '';
+}
+
+// ---- MQTT 3.1.1 over a secure WebSocket: just what DeskMate needs ----
+function lengthBytes(n) { const out = []; do { let b = n % 128; n = Math.floor(n / 128); if (n) b |= 128; out.push(b); } while (n); return out; }
+function str(s) { const b = text.encode(s); return [b.length >> 8, b.length & 255, ...b]; }
+function packet(type, body) { const out = new Uint8Array(1 + lengthBytes(body.length).length + body.length); const head = [type, ...lengthBytes(body.length)]; out.set(head); out.set(body, head.length); return out; }
+class Mqtt {
+  constructor(url, handlers) { this.url = url; this.on = handlers; this.backoff = 2000; this.buffer = new Uint8Array(0); }
+  connect() {
+    const ws = this.ws = new WebSocket(this.url, ['mqtt']);
+    ws.binaryType = 'arraybuffer';
+    ws.onopen = () => {
+      const id = 'dm-away-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+      let flags = 0x02;
+      const payload = [...str(id)];
+      if (config.user) { flags |= 0x80; payload.push(...str(config.user)); }
+      if (config.pass) { flags |= 0x40; payload.push(...str(config.pass)); }
+      ws.send(packet(0x10, new Uint8Array([...str('MQTT'), 4, flags, 0, 60, ...payload])));
+    };
+    ws.onmessage = event => this.receive(new Uint8Array(event.data));
+    ws.onclose = () => {
+      clearInterval(this.ping);
+      this.on.state(false);
+      setTimeout(() => this.connect(), this.backoff);
+      this.backoff = Math.min(this.backoff * 2, 30000);
+    };
+    ws.onerror = () => ws.close();
+  }
+  receive(bytes) {
+    const joined = new Uint8Array(this.buffer.length + bytes.length);
+    joined.set(this.buffer); joined.set(bytes, this.buffer.length);
+    let at = 0;
+    while (true) {
+      let length = 0, multiplier = 1, i = at + 1, done = false;
+      while (i < joined.length && i < at + 5) { const b = joined[i++]; length += (b & 127) * multiplier; multiplier *= 128; if (!(b & 128)) { done = true; break; } }
+      if (!done || i + length > joined.length) break;
+      this.handle(joined[at], joined.subarray(i, i + length));
+      at = i + length;
+    }
+    this.buffer = joined.slice(at);
+  }
+  handle(head, body) {
+    const type = head >> 4;
+    if (type === 2) {  // CONNACK
+      if (body[1] !== 0) { setState('Relay refused the connection', 'down'); this.ws.close(); return; }
+      this.backoff = 2000;
+      this.ping = setInterval(() => this.ws.readyState === 1 && this.ws.send(new Uint8Array([0xC0, 0])), 30000);
+      const topics = [...str('deskmate/' + config.id + '/d'), 0, ...str('deskmate/' + config.id + '/s'), 0];
+      this.ws.send(packet(0x82, new Uint8Array([0, 1, ...topics])));
+      this.on.state(true);
+    } else if (type === 3) {  // PUBLISH
+      const topicLength = body[0] << 8 | body[1];
+      const topic = untext.decode(body.subarray(2, 2 + topicLength));
+      const skip = 2 + topicLength + ((head >> 1) & 3 ? 2 : 0);
+      this.on.message(topic, body.slice(skip));
+    }
+  }
+  publish(topic, payload) {
+    if (!this.ws || this.ws.readyState !== 1) return false;
+    const body = new Uint8Array([...str(topic), ...payload]);
+    this.ws.send(packet(0x30, body));
+    return true;
+  }
+}
+
+// ---- End-to-end encryption (see RelayProto.h on DeskMate) ----
+let key = null;
+const session = crypto.getRandomValues(new Uint32Array(1))[0];
+let counter = 0n;
+const seen = new Map();  // Per DeskMate session: highest counter and the recent ones.
+function hex(s) { return new Uint8Array(s.match(/../g).map(h => parseInt(h, 16))); }
+async function seal(type, body) {
+  counter += 1n;
+  const nonce = new Uint8Array(12), view = new DataView(nonce.buffer);
+  view.setUint32(0, session); view.setUint32(4, Number(counter >> 32n)); view.setUint32(8, Number(counter & 0xffffffffn));
+  const plain = new Uint8Array(5 + body.length);
+  new DataView(plain.buffer).setUint32(0, Math.floor(Date.now() / 1000));
+  plain[4] = type.charCodeAt(0);
+  plain.set(body, 5);
+  const sealed = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv: nonce, additionalData: text.encode('dm1b'), tagLength: 128}, key, plain));
+  const out = new Uint8Array(13 + sealed.length);
+  out[0] = 1; out.set(nonce, 1); out.set(sealed, 13);
+  return out;
+}
+async function open(message) {
+  if (message.length < 34 || message[0] !== 1) return null;
+  const nonce = message.slice(1, 13), view = new DataView(nonce.buffer);
+  let plain;
+  try { plain = new Uint8Array(await crypto.subtle.decrypt({name: 'AES-GCM', iv: nonce, additionalData: text.encode('dm1d'), tagLength: 128}, key, message.slice(13))); }
+  catch (_) { return null; }
+  const sender = view.getUint32(0), sequence = BigInt(view.getUint32(4)) << 32n | BigInt(view.getUint32(8));
+  // Two DeskMate tasks send, so messages may arrive a little out of order: accept
+  // anything new within the last 64, and never the same counter twice.
+  const record = seen.get(sender) || {top: 0n, recent: new Set()};
+  if (sequence + 64n <= record.top || record.recent.has(sequence)) return null;  // Replayed.
+  record.recent.add(sequence);
+  if (sequence > record.top) record.top = sequence;
+  for (const old of record.recent) if (old + 64n <= record.top) record.recent.delete(old);
+  seen.set(sender, record);
+  return {type: String.fromCharCode(plain[4]), body: plain.subarray(5)};
+}
+function unpackBits(input) {
+  const out = new Uint8Array(1024);
+  let i = 0, o = 0;
+  while (i < input.length && o < 1024) {
+    const h = input[i++];
+    if (h < 128) { out.set(input.subarray(i, i + h + 1), o); i += h + 1; o += h + 1; }
+    else if (h > 128) { out.fill(input[i++], o, o + 257 - h); o += 257 - h; }
+  }
+  return o === 1024 ? out : null;
+}
+
+// ---- DeskMate ----
+let mqtt, online = false, deskmateUp = null, lastHeard = 0, pendingAck = null;
+async function send(type, body = new Uint8Array(0)) {
+  if (!online) return false;
+  return mqtt.publish('deskmate/' + config.id + '/b', await seal(type, body));
+}
+const screen = byId('screen').getContext('2d');
+const pixels = screen.createImageData(128, 64);
+function drawFrame(bytes) {
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 128; x++) {
+    const on = (bytes[(y >> 3) * 128 + x] >> (y & 7)) & 1;
+    pixels.data.set(on ? [150,230,255,255] : [8,10,14,255], (y * 128 + x) * 4);
+  }
+  screen.putImageData(pixels, 0, 0);
+}
+function showLive(status) {
+  if (deskmateUp === false) return setState('DeskMate is offline', 'down');
+  if (!online) return setState('Connecting to the relay…', '');
+  if (Date.now() - lastHeard > 12000) return setState('Waiting for DeskMate…', '');
+  if (!status) return setState('Live', 'live');
+  const minutes = Math.floor((status.uptime || 0) / 60);
+  setState('Live · ' + status.version + ' · up ' + (minutes >= 60 ? Math.floor(minutes / 60) + 'h ' : '') + (minutes % 60) + 'm' +
+           (status.trial ? ' · trial' : ''), 'live');
+}
+let lastStatus = null;
+async function onMessage(topic, payload) {
+  if (topic.endsWith('/s')) {
+    deskmateUp = untext.decode(payload) === '1';
+    if (deskmateUp) send('h');
+    return showLive(lastStatus);
+  }
+  const message = await open(payload);
+  if (!message) return;
+  lastHeard = Date.now();
+  deskmateUp = true;
+  if (message.type === 'f') { const frame = unpackBits(message.body); if (frame) drawFrame(frame); }
+  else if (message.type === 's') { try { lastStatus = JSON.parse(untext.decode(message.body)); } catch (_) {} }
+  else if (message.type === 'l') byId('log').textContent = untext.decode(message.body) || 'No events yet.';
+  else if (message.type === 'a' && pendingAck) { try { pendingAck(JSON.parse(untext.decode(message.body))); } catch (_) {} }
+  showLive(lastStatus);
+}
+
+// Knob controls.
+const input = action => send('i', text.encode(action));
+document.querySelectorAll('[data-input]').forEach(button => button.addEventListener('click', () => input(button.dataset.input)));
+const keys = {ArrowLeft:'left', ArrowUp:'left', ArrowRight:'right', ArrowDown:'right', Enter:'click', ' ':'double', Escape:'hold', Backspace:'hold'};
+document.addEventListener('keydown', event => {
+  if (event.target.tagName === 'INPUT' || event.metaKey || event.ctrlKey || event.altKey) return;
+  const action = keys[event.key];
+  if (!action || (event.target.tagName === 'BUTTON' && (event.key === 'Enter' || event.key === ' '))) return;
+  event.preventDefault();
+  input(action);
+});
+let wheel = 0, wheelAt = 0;
+byId('screen').addEventListener('wheel', event => {
+  event.preventDefault();
+  wheel += event.deltaY;
+  const now = Date.now();
+  if (Math.abs(wheel) >= 40 && now - wheelAt > 80) { input(wheel > 0 ? 'right' : 'left'); wheel = 0; wheelAt = now; }
+}, {passive: false});
+
+// Firmware update in acknowledged 4 KB pieces.
+function request(type, body, timeout = 10000) {
+  return new Promise(async resolve => {
+    const timer = setTimeout(() => { pendingAck = null; resolve(null); }, timeout);
+    pendingAck = reply => { clearTimeout(timer); pendingAck = null; resolve(reply); };
+    if (!await send(type, body)) { clearTimeout(timer); pendingAck = null; resolve(null); }
+  });
+}
+async function retried(type, body, timeout) {
+  for (let attempt = 0; attempt < 4; attempt++) { const reply = await request(type, body, timeout); if (reply) return reply; }
+  throw new Error('DeskMate stopped answering. Try again.');
+}
+byId('upload').addEventListener('click', async () => {
+  const file = byId('firmware').files[0];
+  if (!file) { byId('uploadResult').textContent = 'Choose a .bin file first.'; return; }
+  const image = new Uint8Array(await file.arrayBuffer());
+  if (image[0] !== 0xE9) { byId('uploadResult').textContent = 'That file is not a DeskMate firmware image.'; return; }
+  byId('upload').disabled = true;
+  byId('uploadProgress').hidden = false;
+  const started = Date.now();
+  try {
+    const size = new Uint8Array(4); new DataView(size.buffer).setUint32(0, image.length);
+    let reply = await retried('u', size, 20000);
+    if (!reply.ok) throw new Error(reply.error);
+    let offset = 0;
+    while (offset < image.length) {
+      const piece = image.subarray(offset, offset + 4096);
+      const body = new Uint8Array(4 + piece.length);
+      new DataView(body.buffer).setUint32(0, offset);
+      body.set(piece, 4);
+      reply = await retried('c', body, 8000);
+      if (!reply.ok) throw new Error(reply.error);
+      offset = reply.next;
+      const share = offset / image.length, elapsed = (Date.now() - started) / 1000;
+      byId('uploadProgress').value = 100 * share;
+      byId('uploadResult').textContent = 'Sending… ' + Math.round(100 * share) + '%' +
+        (share > 0.05 ? ', about ' + Math.ceil(elapsed * (1 - share) / share) + ' s left' : '');
+    }
+    reply = await retried('e', new Uint8Array(0), 15000);
+    if (!reply.ok) throw new Error(reply.error);
+    byId('uploadResult').textContent = 'Uploaded and verified. DeskMate is installing it and will restart.';
+  } catch (error) {
+    send('x');
+    byId('uploadResult').textContent = error.message;
+  } finally {
+    byId('upload').disabled = false;
+  }
+});
+
+async function start() {
+  if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{64}$/.test(config.key)) {
+    byId('remote').hidden = true;
+    byId('missing').style.display = 'block';
+    setState('Not set up', 'down');
+    return;
+  }
+  if (!window.crypto || !crypto.subtle) { setState('This browser cannot decrypt (needs a secure page)', 'down'); return; }
+  key = await crypto.subtle.importKey('raw', hex(config.key), 'AES-GCM', false, ['encrypt', 'decrypt']);
+  const url = config.ws || 'wss://' + config.broker + ':8884/mqtt';
+  byId('broker').textContent = new URL(url).host;
+  mqtt = new Mqtt(url, {
+    state: up => { online = up; if (up) { send('h'); send('l'); } showLive(lastStatus); },
+    message: onMessage,
+  });
+  setState('Connecting to the relay…', '');
+  mqtt.connect();
+  // Say hello while the page is open, so DeskMate keeps sending the screen.
+  setInterval(() => { if (!document.hidden) send('h'); showLive(lastStatus); }, 5000);
+  setInterval(() => { if (!document.hidden) send('l'); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) send('h'); });
+  byId('screen').focus();
+}
+byId('forgetAway').addEventListener('click', event => {
+  event.preventDefault();
+  try { localStorage.removeItem('deskmateAway'); } catch (_) {}
+  location.replace(location.pathname);
+});
+start();
+</script>
+</body>
+</html>
