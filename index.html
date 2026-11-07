@@ -71,6 +71,8 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <button data-input="right" title="Turn right (→)">⟳</button></div>
 <p class="mute" style="text-align:center;font-size:.8rem">← → turn · Enter click · Space double · Esc hold · wheel over the screen turns</p>
 <div class="card"><div class="grid2" id="glance"></div></div>
+<div class="card"><h2><span>Agenda</span><button class="small ghost" id="calRefresh">Refresh</button></h2><div class="list" id="agendaList"></div><small id="agendaStatus" class="mute"></small></div>
+<div class="card hidden" id="worldCard"><h2><span>World clocks</span></h2><div class="grid2" id="worldList"></div></div>
 </section>
 
 <section class="tab" data-tab="alarms">
@@ -93,6 +95,9 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <label>Focus (min)<input id="fWork" type="number" min="1" max="90"></label><label>Rounds<input id="fRounds" type="number" min="1" max="8"></label>
 <label>Short break<input id="fShort" type="number" min="1" max="30"></label><label>Long break<input id="fLong" type="number" min="1" max="60"></label></div>
 <button id="focusSave">Save lengths</button></div>
+<div class="card"><h2><span>Your desk, last 14 days</span><span class="chip" id="streak" style="flex:none"></span></h2>
+<svg id="deskChart" viewBox="0 0 280 120" style="width:100%"></svg>
+<div class="chips"><span class="chip">▯ desk time</span><span class="chip">▮ focus</span></div><div class="chips" id="deskTotals"></div></div>
 </section>
 
 <section class="tab" data-tab="tasks">
@@ -111,6 +116,12 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <p>Scan this on your phone to use DeskMate from anywhere, through an encrypted relay (no router setup). The code holds DeskMate's key: keep it to yourself.</p>
 <canvas id="qr" width="0" height="0" aria-label="QR code with this DeskMate's away link"></canvas>
 <div class="row" style="margin-top:.6rem"><button id="copyAway" class="ghost">Copy the away link</button><a id="awayFile" class="btn ghost" href="/away" download="DeskMate.html" style="text-align:center;text-decoration:none">Download as a file</a></div></div>
+<div class="card"><h2><span>Alerts on your phone</span></h2>
+<p>Install the free <b>ntfy</b> app (iPhone or Android), then subscribe to this DeskMate's private topic: scan the code or tap the link on your phone. DeskMate sends timers, alarms, reminders and focus there while you're away from the desk. Turn it on under <b>Settings → Phone alerts</b>.</p>
+<canvas id="ntfyQr" width="0" height="0" aria-label="QR code with the ntfy subscription link"></canvas>
+<p><a id="ntfyLink" href="#" target="_blank" rel="noopener"></a></p>
+<div class="row"><button id="ntfyTest" class="ghost">Send a test</button></div><small id="ntfyStatus" class="mute"></small></div>
+<div class="card"><h2><span>Health, last 7 days</span></h2><svg id="healthChart" viewBox="0 0 280 130" style="width:100%"></svg><small id="healthNote" class="mute"></small></div>
 <div class="card"><h2><span>Software update</span></h2><p id="updateText" class="mute">Checking…</p>
 <div class="row"><button id="updateCheck" class="ghost">Check now</button><button id="updateInstall" class="hidden">Install</button></div>
 <details class="home-only"><summary>Upload a signed build instead</summary><input id="firmware" type="file" accept=".bin,application/octet-stream">
@@ -540,7 +551,9 @@ function go(tab) {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === tab));
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
   if (tab === 'settings' || tab === 'more') loadSettings();
-  if (tab === 'more') { loadLog(); }
+  if (tab === 'more') { loadLog(); loadHistory(); }
+  if (tab === 'home') { loadAgenda(); if (!prefs) loadSettings(); }
+  if (tab === 'focus') loadHistory();
   render();
 }
 document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
@@ -553,6 +566,8 @@ async function applyState(s, force) {
   live = s; stateAt = Date.now();
   const key = s.revision + ':' + s.doneMask;
   if (force || !data || key !== dataKey) { data = await api('GET', '/data'); dataKey = key; }
+  // Settings changed somewhere else (DeskMate's knob, another browser): read them again.
+  if (prefs && prefs.revision !== undefined && s.revision !== prefs.revision && !byId('settingsForm').contains(document.activeElement)) loadSettings();
   setState('Live · ' + s.version + (s.time ? ' · ' + s.time.slice(0, 5) : ''), 'live');
   render();
 }
@@ -565,7 +580,11 @@ async function refresh(force) {
     else setState(e.message, 'down');
   }
 }
-async function loadSettings() { try { prefs = await api('GET', '/settings'); renderSettings(); renderNetworks(); } catch (_) {} }
+let zones = null, agenda = null, historyData = null;
+async function loadZones() { if (!zones) { try { zones = (await api('GET', '/zones')).zones; } catch (_) {} } }
+async function loadSettings() { try { await loadZones(); prefs = await api('GET', '/settings'); renderSettings(); renderNetworks(); renderNtfy(); renderWorld(); } catch (_) {} }
+async function loadAgenda() { try { agenda = await api('GET', '/agenda'); renderAgenda(); } catch (_) {} }
+async function loadHistory() { try { historyData = await api('GET', '/history'); renderDesk(); renderHealth(); } catch (_) {} }
 async function loadLog() { try { byId('log').textContent = (await api('GET', '/log')).text || 'No events yet.'; } catch (e) { byId('log').textContent = e.message; } }
 byId('logRefresh').onclick = loadLog;
 
@@ -599,7 +618,93 @@ function renderHome() {
   const next = nextAlarm(); add('Next alarm', next || 'none');
   const done = data.tasks.filter(t => t.label && t.done).length, total = data.tasks.filter(t => t.label).length;
   add('Tasks', total ? done + ' of ' + total : 'none');
+  if (live.next) add('Next event', timeAt(live.next.start) + ' ' + live.next.title);
+  if (live.streak) add('Focus streak', live.streak + (live.streak === 1 ? ' day' : ' days'));
+  renderWorld();
 }
+// ---- 1.9: agenda, world clocks, desk history, phone alerts and health ----
+const timeAt = unix => { const d = new Date(unix * 1000); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function renderAgenda() {
+  const list = byId('agendaList'); list.replaceChildren();
+  if (!agenda) return;
+  byId('agendaStatus').textContent = agenda.set ? agenda.status : 'Add your calendar\'s private link under Settings → Calendar.';
+  byId('calRefresh').hidden = !agenda.set;
+  if (agenda.set && !agenda.items.length) list.append(el('p', {class: 'mute', text: 'Nothing today or tomorrow.'}));
+  const today = new Date().toDateString(), now = Date.now() / 1000;
+  agenda.items.forEach(item => {
+    const day = new Date(item.start * 1000);
+    const when = (day.toDateString() === today ? '' : DAYS[day.getDay()] + ' ') + (item.allDay ? 'all day' : timeAt(item.start) + '–' + timeAt(item.end));
+    list.append(el('div', {class: 'item', style: !item.allDay && item.end < now ? 'opacity:.5' : ''},
+      el('div', {class: 'main'}, el('div', {text: item.title}), el('div', {class: 'sub', text: when}))));
+  });
+}
+byId('calRefresh').onclick = () => post('/calendar/refresh', {}, 'Refreshing the calendar').then(() => setTimeout(loadAgenda, 6000));
+function renderWorld() {
+  const picks = prefs && zones ? [prefs.world1, prefs.world2, prefs.world3].filter(n => n > 0 && zones[n - 1]) : [];
+  byId('worldCard').classList.toggle('hidden', !picks.length);
+  const box = byId('worldList'); box.replaceChildren();
+  picks.forEach(n => {
+    const [city, iana] = zones[n - 1];
+    let t = '—';
+    try { t = new Intl.DateTimeFormat(undefined, {timeZone: iana, hour: '2-digit', minute: '2-digit', weekday: 'short'}).format(new Date()); } catch (_) {}
+    box.append(el('div', {}, el('small', {text: city}), el('div', {class: 'big', style: 'font-size:1.15rem;font-weight:700', text: t})));
+  });
+}
+const svgNs = 'http://www.w3.org/2000/svg';
+const svg = (tag, attrs) => { const e = document.createElementNS(svgNs, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); return e; };
+const hm = m => m < 60 ? m + 'm' : Math.floor(m / 60) + 'h' + (m % 60 ? pad(m % 60) : '');
+function renderDesk() {
+  if (!historyData) return;
+  const chart = byId('deskChart'); chart.replaceChildren();
+  const today = historyData.today, rows = historyData.days.filter(d => d[0] !== today[0]).slice(-13).concat([today]);
+  const top = Math.max(60, ...rows.map(d => Math.max(d[1], d[2])));
+  const w = 280 / 14;
+  rows.forEach((d, i) => {
+    const x = (14 - rows.length + i) * w, desk = 100 * d[1] / top, focus = 100 * d[2] / top;
+    chart.append(svg('rect', {x: x + 2, y: 102 - desk, width: w - 4, height: desk, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 1.2, rx: 2}));
+    chart.append(svg('rect', {x: x + 5, y: 102 - focus, width: w - 10, height: focus, fill: 'var(--accent)', rx: 1.5}));
+    const label = svg('text', {x: x + w / 2, y: 116, 'text-anchor': 'middle', 'font-size': 7, fill: 'currentColor', opacity: .6});
+    label.textContent = String(d[0] % 100);
+    chart.append(label);
+  });
+  byId('streak').textContent = historyData.streak ? historyData.streak + '-day focus streak' : 'No streak yet';
+  const week = historyData.days.filter(d => d[0] !== today[0]).slice(-7);
+  const sum = k => week.reduce((a, d) => a + d[k], 0);
+  const totals = byId('deskTotals'); totals.replaceChildren();
+  [['Today', hm(today[1]) + ' desk · ' + hm(today[2]) + ' focus · ' + today[3] + ' sessions'],
+   ['Last 7 days', hm(sum(1)) + ' desk · ' + hm(sum(2)) + ' focus · ' + sum(3) + ' sessions']].forEach(([k, v]) =>
+    totals.append(el('span', {class: 'chip', text: k + ': ' + v})));
+}
+function renderHealth() {
+  if (!historyData) return;
+  const chart = byId('healthChart'); chart.replaceChildren();
+  const hours = historyData.hours.slice(-168);
+  if (!hours.length) { byId('healthNote').textContent = 'Hourly snapshots start once DeskMate has the time.'; return; }
+  const first = hours[hours.length - 1][0] - 167;
+  const x = h => (h - first) * 280 / 168;
+  // Lowest free memory per hour (top half, 0-64 KB) and the slowest loop pass (bottom half, 0-200 ms).
+  const line = (pick, scale, base, color) => chart.append(svg('polyline', {fill: 'none', stroke: color, 'stroke-width': 1.3,
+    points: hours.map(r => x(r[0]).toFixed(1) + ',' + (base - Math.min(1, pick(r) / scale) * 50).toFixed(1)).join(' ')}));
+  [[58, 'Free memory, lowest each hour (to 64 KB)'], [118, 'Slowest loop pass each hour (to 200 ms)']].forEach(([y, t]) => {
+    chart.append(svg('line', {x1: 0, x2: 280, y1: y, y2: y, stroke: '#8884'}));
+    const label = svg('text', {x: 2, y: y - 44, 'font-size': 7, fill: 'currentColor', opacity: .6}); label.textContent = t; chart.append(label);
+  });
+  line(r => r[1], 64, 58, 'var(--accent)');
+  line(r => r[2], 200, 118, 'var(--bad)');
+  hours.filter(r => r[4]).forEach(r => chart.append(svg('line', {x1: x(r[0]), x2: x(r[0]), y1: 4, y2: 118, stroke: 'var(--bad)', 'stroke-dasharray': '2 2'})));
+  const low = Math.min(...hours.map(r => r[1])), slow = Math.max(...hours.map(r => r[2]));
+  const resets = hours.reduce((a, r) => a + r[4], 0), drops = hours.reduce((a, r) => a + r[3], 0);
+  byId('healthNote').textContent = 'Lowest ' + low + ' KB free · slowest loop ' + slow + ' ms · ' + resets + ' restart' + (resets === 1 ? '' : 's') +
+    ' (dashed) · ' + drops + ' Wi-Fi drop' + (drops === 1 ? '' : 's');
+}
+function renderNtfy() {
+  if (!prefs || !prefs.ntfyTopic) return;
+  const link = 'https://ntfy.sh/' + prefs.ntfyTopic;
+  byId('ntfyLink').href = link; byId('ntfyLink').textContent = link;
+  drawQr(byId('ntfyQr'), link);
+  byId('ntfyStatus').textContent = live && live.ntfy ? 'Phone alerts: ' + live.ntfy : '';
+}
+byId('ntfyTest').onclick = () => post('/ntfy/test', {}, 'Test sent: check your phone');
 function nextAlarm() {
   if (!live.time) return '';
   const now = readHHMM(live.time.slice(0, 5)), today = new Date().getDay();
@@ -762,6 +867,11 @@ const SETTINGS = [
                 ['standMinutes', 'Stand-up nudge after (min, 0 off)', 'number', 0, 120], ['autoPauseFocus', 'Pause focus when away', 'toggle'], ['gestures', 'Hand gestures', 'toggle']]],
   ['Knob', [['knobReverse', 'Reverse direction', 'toggle'], ['knobEdges', 'Edges per click', 'select', {4: '4 (most knobs)', 2: '2', 1: '1'}],
             ['knobDoubleMs', 'Double-click', 'select', {170: 'Fast', 250: 'Normal', 350: 'Relaxed'}], ['knobAccel', 'Momentum', 'select', ['Off', 'Gentle', 'Fast']]]],
+  ['Calendar', [['calendarUrl', 'Private calendar link (https or webcal .ics)', 'calendar'], ['calendarChime', 'Chime 5 minutes before events', 'toggle']]],
+  ['Wellness', [['waterMinutes', 'Drink-water reminder', 'select', {0: 'Off', 30: 'Every 30 min', 45: 'Every 45 min', 60: 'Every hour', 90: 'Every 90 min', 120: 'Every 2 hours'}],
+                ['eyeBreaks', 'Eye breaks (20-20-20, at the desk)', 'toggle']]],
+  ['Phone alerts', [['ntfy', 'Send alerts to my phone (ntfy)', 'toggle'], ['ntfyAlways', 'Even while I am at the desk', 'toggle']]],
+  ['World clocks', [['world1', 'Clock 1', 'zone'], ['world2', 'Clock 2', 'zone'], ['world3', 'Clock 3', 'zone']]],
   ['Weather and news', [['weather', 'Weather', 'toggle'], ['latitude', 'Latitude', 'decimal'], ['longitude', 'Longitude', 'decimal'], ['feed', 'News feed (RSS link)', 'text']]],
   ['Connections', [['remote', 'Remote access at home', 'toggle'], ['relay', 'Away relay', 'toggle'], ['ideUploads', 'IDE uploads over Wi-Fi', 'toggle'],
                    ['bluetooth', 'Bluetooth', 'toggle'], ['homeVolume', 'Home knob changes volume', 'toggle'], ['phoneRange', 'Phone nearby above −dBm', 'number', 40, 100],
@@ -780,8 +890,26 @@ function renderSettings() {
   SETTINGS.forEach(([title, fields]) => {
     const card = el('div', {class: 'card'}, el('h2', {}, el('span', {text: title})));
     fields.forEach(([key, label, kind, a, b]) => {
-      if (prefs[key] === undefined && kind !== 'password') return;
+      if (prefs[key] === undefined && kind !== 'password' && kind !== 'calendar') return;
       let input;
+      if (kind === 'calendar') {
+        // The link is private: DeskMate keeps it and never sends it back, so only say whether one is saved.
+        input = el('input', {type: 'url', placeholder: prefs.calendarSet ? 'Saved. Paste a new link to replace it' : 'https://… or webcal://…', autocomplete: 'off'});
+        const remove = el('button', {class: 'small ghost', hidden: !prefs.calendarSet, text: 'Remove calendar', on: {click: () => saveSetting(key, '', null)}});
+        card.append(el('label', {}, label, input), remove,
+          el('small', {class: 'mute', text: 'Google: Settings → your calendar → Secret address in iCal format. iCloud: share the calendar as Public and copy its link. Outlook: Publish calendar → ICS.'}));
+        input.onchange = () => { if (input.value.trim()) { saveSetting(key, input.value.trim(), null); input.value = ''; setTimeout(loadSettings, 800); } };
+        return;
+      }
+      if (kind === 'zone') {
+        input = el('select');
+        input.append(el('option', {value: 0, text: 'None'}));
+        (zones || []).forEach(([city], i) => input.append(el('option', {value: i + 1, text: city})));
+        card.append(el('label', {}, label, input));
+        input.onchange = () => saveSetting(key, +input.value, input);
+        setInput(input, prefs[key]);
+        return;
+      }
       if (kind === 'toggle') {
         input = el('input', {type: 'checkbox'});
         card.append(el('div', {class: 'item'}, el('div', {class: 'main', text: label}), el('label', {class: 'switch'}, input, el('span'))));
@@ -878,6 +1006,9 @@ async function boot() {
   // Away, or at home without the socket: ask every 3 s.
   setInterval(() => { if (!document.hidden && (away || !socket || socket.readyState !== 1)) refresh(); }, 3000);
   setInterval(() => { if (!document.hidden && live) tick(); }, 250);
+  // The agenda changes rarely (DeskMate fetches it hourly): read it again every minute on Home.
+  setTimeout(() => { if (current === 'home') { loadAgenda(); loadSettings(); } }, away ? 3000 : 500);
+  setInterval(() => { if (!document.hidden && current === 'home') loadAgenda(); }, 60000);
 }
 boot();
 </script>

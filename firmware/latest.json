@@ -1,7 +1,7 @@
 {
-  "version": "1.8.0",
-  "size": 1761262,
-  "sha256": "f293a34ef4bd1de7f75871be12d006e0a2530006df7a0e458625913489808189",
-  "url": "DeskMateOS-1.8.0.bin",
-  "notes": "The DeskMate app: alarms, timers, tasks, countdowns, focus, settings, networks and updates from any browser, at home or away. Add and delete alarms and tasks on DeskMate. Steadier memory with live viewers."
+  "version": "1.9.0",
+  "size": 1806717,
+  "sha256": "016af9f3cb0b7613d24526b8466df2960c958d7c2c670299777baa47b98e16ff",
+  "url": "DeskMateOS-1.9.0.bin",
+  "notes": "Calendar agenda, alerts on your phone (ntfy), desk stats and wellness reminders, world clocks and an hourly health history. Fixes: weather, news and update downloads no longer stall after the first update check; much more free memory."
 }
