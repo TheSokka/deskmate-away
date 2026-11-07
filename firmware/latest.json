@@ -1,7 +1,7 @@
 {
-  "version": "1.7.0",
-  "size": 1697390,
-  "sha256": "0cd424e36095ffea74e69e4117b0ac1152842f61d58783153d52d00ce98fb0c8",
-  "url": "DeskMateOS-1.7.0.bin",
-  "notes": "New boot face, 4 clock faces, trusted clock, volume and gentle alarms, knob settings, telemetry."
+  "version": "1.8.0",
+  "size": 1761262,
+  "sha256": "f293a34ef4bd1de7f75871be12d006e0a2530006df7a0e458625913489808189",
+  "url": "DeskMateOS-1.8.0.bin",
+  "notes": "The DeskMate app: alarms, timers, tasks, countdowns, focus, settings, networks and updates from any browser, at home or away. Add and delete alarms and tasks on DeskMate. Steadier memory with live viewers."
 }

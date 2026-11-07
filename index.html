@@ -2,330 +2,884 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
-<title>DeskMate OS | Away</title>
+<meta name="theme-color" content="#0d1416">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>DeskMate</title>
 <style>
-:root{color-scheme:light dark;--accent:#1a7771}
-*{box-sizing:border-box}body{font:16px/1.45 system-ui,sans-serif;margin:0 auto;max-width:44rem;padding:1rem 1rem 3rem}
-header{padding:.6rem 0;border-bottom:2px solid var(--accent);display:flex;align-items:end;gap:1rem;flex-wrap:wrap}
-header div{flex:1}h1{margin:0}small{display:block;opacity:.8}
-button{font:inherit;padding:.65rem 1rem;border:0;border-radius:.45rem;color:white;background:var(--accent);font-weight:700;cursor:pointer}
-button:disabled{opacity:.5;cursor:default}
-#screen{display:block;width:100%;max-width:512px;margin:1rem auto .5rem;aspect-ratio:2;image-rendering:pixelated;background:#05070a;border-radius:.7rem;border:3px solid #222;outline:none}
-#screen:focus-visible{border-color:var(--accent)}
-.knob{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;max-width:512px;margin:0 auto}
-.knob button{padding:.7rem .2rem;font-size:.95rem}
-.hint{text-align:center;font-size:.85rem;opacity:.75;margin:.4rem 0 1rem}
-#state{font-size:.9rem}.dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;background:#999;margin-right:.35rem}
-.live .dot{background:#2e9d5a}.down .dot{background:#c0392b}
-section{border:1px solid #8887;border-radius:.6rem;padding:.8rem;margin:1rem 0}h2{font-size:1.05rem;margin:0 0 .5rem}
-progress{width:100%;height:.9rem;accent-color:var(--accent)}
-#log{white-space:pre-wrap;font-size:.8rem;max-height:16rem;overflow:auto;background:#8881;padding:.5rem;border-radius:.4rem;margin:0}
-.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 auto}
-#missing{display:none}
+:root{color-scheme:light dark;--accent:#1f8a82;--accent2:#2fb3a8;--bg:#f4f6f6;--card:#fff;--ink:#14201f;--mute:#667;--line:#0001;--bad:#c0392b;--good:#2e9d5a}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1416;--card:#162123;--ink:#e6efee;--mute:#90a3a1;--line:#fff1}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,sans-serif}
+body{padding:0 0 calc(4.6rem + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-bottom:1px solid var(--line)}
+header h1{font-size:1.15rem;margin:0;flex:1}
+#state{font-size:.8rem;color:var(--mute);display:flex;align-items:center;gap:.35rem;text-align:right}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:#999;flex:none}.live .dot{background:var(--good)}.down .dot{background:var(--bad)}
+main{max-width:46rem;margin:0 auto;padding:.8rem}
+section.tab{display:none}section.tab.on{display:block}
+.card{background:var(--card);border-radius:.9rem;padding:.9rem 1rem;margin:0 0 .8rem;box-shadow:0 1px 2px #0002}
+h2{font-size:1rem;margin:.2rem 0 .7rem;display:flex;align-items:center;gap:.5rem}h2 span{flex:1}
+small,.mute{color:var(--mute)}small{display:block;font-size:.82rem}
+button,.btn{font:inherit;font-weight:650;border:0;border-radius:.6rem;padding:.6rem .9rem;background:var(--accent);color:#fff;cursor:pointer}
+[hidden]{display:none!important}button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}button.bad{background:var(--bad)}
+button:disabled{opacity:.45;cursor:default}button.small{padding:.35rem .65rem;font-size:.85rem}
+input,select{font:inherit;color:inherit;background:transparent;border:1px solid #8885;border-radius:.5rem;padding:.5rem .6rem;width:100%}
+input[type=checkbox]{width:auto}label{display:block;margin:.5rem 0}label>input,label>select{margin-top:.2rem}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.row>*{flex:1 1 auto}.row>.fit{flex:0 0 auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+#screen{display:block;width:100%;max-width:520px;margin:0 auto .6rem;aspect-ratio:2;image-rendering:pixelated;background:#05070a;border-radius:.8rem;border:3px solid #222;outline:none}
+.knob{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;max-width:520px;margin:0 auto}.knob button{padding:.65rem .1rem;font-size:.9rem}
+.list>.item{display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-top:1px solid var(--line)}.list>.item:first-child{border-top:0}
+.item .main{flex:1;min-width:0}.item .big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.item .sub{font-size:.85rem;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.switch{position:relative;width:2.8rem;height:1.6rem;flex:none}.switch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:1rem;background:#8886;transition:.2s}.switch span:after{content:'';position:absolute;left:.2rem;top:.2rem;width:1.2rem;height:1.2rem;border-radius:50%;background:#fff;transition:.2s}
+.switch input:checked+span{background:var(--accent)}.switch input:checked+span:after{left:1.4rem}
+.days{display:flex;gap:.25rem;flex-wrap:wrap}.days label{margin:0}.days input{display:none}.days span{display:inline-block;padding:.25rem .45rem;border-radius:.4rem;border:1px solid #8885;font-size:.8rem;cursor:pointer}
+.days input:checked+span{background:var(--accent);color:#fff;border-color:var(--accent)}
+.timer .big{font-size:2.2rem}.ring{width:9rem;height:9rem;margin:.2rem auto .6rem;display:block}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0}.chip{font-size:.8rem;padding:.2rem .55rem;border-radius:1rem;background:#8882}
+.check{width:1.5rem;height:1.5rem;flex:none;accent-color:var(--accent)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;color:var(--mute);border-radius:0;padding:.55rem 0 .5rem;font-size:.7rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+nav button b{font-size:1.15rem;font-weight:400;line-height:1}nav button.on{color:var(--accent)}
+#toast{position:fixed;left:50%;bottom:5.4rem;transform:translateX(-50%);background:#222e;color:#fff;padding:.55rem .9rem;border-radius:.6rem;font-size:.9rem;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw}
+#toast.on{opacity:1}
+#log{white-space:pre-wrap;font-size:.78rem;max-height:20rem;overflow:auto;margin:0}
+.banner{background:var(--accent);color:#fff}.banner button{background:#fff;color:var(--accent)}
+details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
+#qr{background:#fff;border-radius:.4rem;max-width:280px;width:100%;image-rendering:pixelated}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<header><div><small>DESKMATE OS 1.6 · AWAY</small><h1>DeskMate</h1></div><span id="state"><span class="dot"></span><span id="stateText">Starting…</span></span></header>
-<section id="missing"><h2>This page is not set up</h2>
-<p>At home, open http://deskmate.local, pair that browser, and scan the QR code under “Away from home” with this phone. Or use “Download the away page” on a computer.</p></section>
-<div id="remote">
+<header><h1>DeskMate</h1><div id="state"><span id="stateText">Starting…</span><span class="dot"></span></div></header>
+<main>
+<div id="pair" class="card hidden"><h2>Pair this browser</h2>
+<p>DeskMate asks you to confirm on its screen: click the knob once to allow this browser. Paired browsers can see and change everything on DeskMate.</p>
+<button id="pairButton">Pair this browser</button><p id="pairStatus" class="mute"></p></div>
+<div id="missing" class="card hidden"><h2>This page is not set up</h2>
+<p>At home, open <b>http://deskmate.local</b>, pair the browser, and scan the QR code under <b>More → Phone and away</b> with this phone.</p></div>
+
+<section class="tab" data-tab="home">
+<div id="releaseBanner" class="card banner hidden"><div class="row"><span id="releaseText"></span><button class="fit small" id="releaseInstall">Install</button></div></div>
 <canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
 <div class="knob">
-<button data-input="left" title="Turn left (←)">⟲ Left</button>
-<button data-input="click" title="Click (Enter)">Click</button>
-<button data-input="double" title="Double-click (Space)">Double</button>
-<button data-input="hold" title="Hold (Esc)">Hold</button>
-<button data-input="right" title="Turn right (→)">Right ⟳</button>
-</div>
-<p class="hint">Keys: ← → turn · Enter click · Space double · Esc hold · mouse wheel over the screen turns</p>
-<section><h2>Firmware update</h2>
-<div class="row"><input id="firmware" type="file" accept=".bin,application/octet-stream"><button id="upload">Upload and install</button></div>
-<progress id="uploadProgress" max="100" value="0" hidden></progress>
-<p id="uploadResult" role="status"></p>
-<small>Sent in encrypted pieces through the relay, so it takes a minute or two. DeskMate checks the image, installs it, and rolls back on its own if the new version fails.</small>
+<button data-input="left" title="Turn left (←)">⟲</button><button data-input="click" title="Click (Enter)">Click</button>
+<button data-input="double" title="Double-click (Space)">Double</button><button data-input="hold" title="Hold (Esc)">Hold</button>
+<button data-input="right" title="Turn right (→)">⟳</button></div>
+<p class="mute" style="text-align:center;font-size:.8rem">← → turn · Enter click · Space double · Esc hold · wheel over the screen turns</p>
+<div class="card"><div class="grid2" id="glance"></div></div>
 </section>
-<section><h2>Event log</h2><pre id="log">Waiting for DeskMate…</pre></section>
-<small>End-to-end encrypted: the relay (<span id="broker"></span>) only passes along data it cannot read. Your link (or file) holds DeskMate's key, so keep it private. <a href="#" id="forgetAway">Forget DeskMate on this device</a></small>
-</div>
+
+<section class="tab" data-tab="alarms">
+<div class="card"><h2><span>Alarms</span><button class="small" id="addAlarm">＋ New</button></h2><div class="list" id="alarmList"></div></div>
+</section>
+
+<section class="tab" data-tab="timers">
+<div class="card"><h2><span>Timers</span></h2><div class="list" id="timerList"></div></div>
+<div class="card"><h2><span>Stopwatch</span></h2><div class="item"><div class="main"><div class="big" id="watchTime">0:00.0</div><div class="sub" id="watchLaps"></div></div></div>
+<div class="row"><button id="watchToggle">Start</button><button class="ghost" id="watchLap">Lap</button><button class="ghost" id="watchReset">Reset</button></div></div>
+</section>
+
+<section class="tab" data-tab="focus">
+<div class="card" style="text-align:center"><h2><span>Focus</span></h2>
+<svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="#8883" stroke-width="7"/><circle id="focusArc" cx="50" cy="50" r="44" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="276.5" stroke-dashoffset="0"/>
+<text id="focusClock" x="50" y="52" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">25:00</text><text id="focusPhase" x="50" y="68" text-anchor="middle" font-size="8" fill="currentColor" opacity=".7">Ready</text></svg>
+<div class="chips" id="focusRounds" style="justify-content:center"></div>
+<div class="row"><button id="focusToggle">Start</button><button class="ghost" id="focusSkip">Skip</button><button class="ghost" id="focusReset">Reset</button></div></div>
+<div class="card"><h2><span>Session lengths</span></h2><div class="grid2">
+<label>Focus (min)<input id="fWork" type="number" min="1" max="90"></label><label>Rounds<input id="fRounds" type="number" min="1" max="8"></label>
+<label>Short break<input id="fShort" type="number" min="1" max="30"></label><label>Long break<input id="fLong" type="number" min="1" max="60"></label></div>
+<button id="focusSave">Save lengths</button></div>
+</section>
+
+<section class="tab" data-tab="tasks">
+<div class="card"><h2><span>Today</span><button class="small" id="addTask">＋ New</button></h2><div class="list" id="taskList"></div></div>
+<div class="card"><h2><span>Countdowns</span><button class="small" id="addEvent">＋ New</button></h2><div class="list" id="eventList"></div></div>
+</section>
+
+<section class="tab" data-tab="settings"><div id="settingsForm"></div></section>
+
+<section class="tab" data-tab="more">
+<div class="card"><h2><span>Wi-Fi networks</span></h2><div class="list" id="networkList"></div>
+<details><summary>Add a network</summary><label>Name<input id="netSsid" maxlength="32" autocomplete="off"></label>
+<label>Password<input id="netPass" type="password" maxlength="63" autocomplete="new-password"></label>
+<label class="row"><input id="netOpen" type="checkbox" class="fit"> <span>Open network (no password)</span></label><button id="netAdd">Add and join</button></details></div>
+<div class="card home-only" id="phoneCard"><h2><span>Phone and away</span></h2>
+<p>Scan this on your phone to use DeskMate from anywhere, through an encrypted relay (no router setup). The code holds DeskMate's key: keep it to yourself.</p>
+<canvas id="qr" width="0" height="0" aria-label="QR code with this DeskMate's away link"></canvas>
+<div class="row" style="margin-top:.6rem"><button id="copyAway" class="ghost">Copy the away link</button><a id="awayFile" class="btn ghost" href="/away" download="DeskMate.html" style="text-align:center;text-decoration:none">Download as a file</a></div></div>
+<div class="card"><h2><span>Software update</span></h2><p id="updateText" class="mute">Checking…</p>
+<div class="row"><button id="updateCheck" class="ghost">Check now</button><button id="updateInstall" class="hidden">Install</button></div>
+<details class="home-only"><summary>Upload a signed build instead</summary><input id="firmware" type="file" accept=".bin,application/octet-stream">
+<button id="upload" style="margin-top:.5rem">Upload and install</button><progress id="uploadProgress" max="100" value="0" class="hidden" style="width:100%"></progress>
+<small id="uploadResult"></small><small>Only firmware signed with your DeskMate key installs (<code>tools/release.sh --sign-only</code>).</small></details></div>
+<div class="card"><h2><span>Event log</span><button class="small ghost" id="logRefresh">Refresh</button></h2><pre id="log">…</pre></div>
+<div class="card"><small id="transportNote"></small><p><a href="#" id="forget">Unpair this browser</a></p></div>
+</section>
+</main>
+<nav id="tabs">
+<button data-go="home" class="on"><b>◉</b>Home</button><button data-go="alarms"><b>⏰</b>Alarms</button>
+<button data-go="timers"><b>⏱</b>Timers</button><button data-go="focus"><b>◎</b>Focus</button>
+<button data-go="tasks"><b>✓</b>Tasks</button><button data-go="settings"><b>⚙</b>Settings</button><button data-go="more"><b>⋯</b>More</button></nav>
+<div id="toast" role="status"></div>
 <script>
 'use strict';
-const embedded = /*DESKMATE_CONFIG*/null;
-const byId = id => document.getElementById(id);
-const text = new TextEncoder(), untext = new TextDecoder();
-function fromFragment() {
-  const p = new URLSearchParams(location.hash.slice(1));
-  if (!p.get('id') || !p.get('key')) return null;
-  return {id: p.get('id'), key: p.get('key'), broker: p.get('broker') || 'broker.hivemq.com', ws: p.get('ws') || '',
-          user: p.get('user') || '', pass: p.get('pass') || ''};
-}
-// Hosted copy: the link from DeskMate's QR code carries the settings after the #. They are
-// also remembered on this device, for when the page is opened without them.
-function remembered() {
-  try { return JSON.parse(localStorage.getItem('deskmateAway') || 'null'); } catch (_) { return null; }
-}
-let config = embedded && embedded.id ? embedded : fromFragment();
-if (!(embedded && embedded.id)) {
-  if (config) { try { localStorage.setItem('deskmateAway', JSON.stringify(config)); } catch (_) {} }
-  else config = remembered();
-}
-function setState(message, kind) {
-  byId('stateText').textContent = message;
-  byId('state').className = kind || '';
+// QR codes (byte mode, error correction M), after Project Nayuki's reference algorithm.
+const qrEncode = (() => {
+  const EC_PER_BLOCK = [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28];
+  const BLOCKS = [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49];
+  const bit = (x, i) => ((x >>> i) & 1) !== 0;
+  const rawModules = v => {
+    let r = (16 * v + 128) * v + 64;
+    if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; }
+    return r;
+  };
+  const dataCodewords = v => Math.floor(rawModules(v) / 8) - EC_PER_BLOCK[v] * BLOCKS[v];
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };
+  function divisor(degree) {
+    const r = new Array(degree - 1).fill(0); r.push(1);
+    let root = 1;
+    for (let i = 0; i < degree; i++) {
+      for (let j = 0; j < r.length; j++) { r[j] = mul(r[j], root); if (j + 1 < r.length) r[j] ^= r[j + 1]; }
+      root = mul(root, 2);
+    }
+    return r;
+  }
+  function remainder(data, div) {
+    const r = div.map(() => 0);
+    for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f); }); }
+    return r;
+  }
+  return function (textValue) {
+    const bytes = Array.from(new TextEncoder().encode(textValue));
+    let v = 1;
+    for (; v <= 40; v++) if (4 + (v < 10 ? 8 : 16) + bytes.length * 8 <= dataCodewords(v) * 8) break;
+    if (v > 40) throw new Error('Too long for a QR code');
+    // Data bits: byte mode, length, data, terminator, padding.
+    const bits = [];
+    const put = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    put(4, 4); put(bytes.length, v < 10 ? 8 : 16); bytes.forEach(b => put(b, 8));
+    const capacity = dataCodewords(v) * 8;
+    put(0, Math.min(4, capacity - bits.length));
+    put(0, (8 - bits.length % 8) % 8);
+    for (let pad = 0xEC; bits.length < capacity; pad ^= 0xEC ^ 0x11) put(pad, 8);
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) data.push(parseInt(bits.slice(i, i + 8).join(''), 2));
+    // Error correction blocks, interleaved.
+    const nBlocks = BLOCKS[v], ecLen = EC_PER_BLOCK[v], raw = Math.floor(rawModules(v) / 8);
+    const nShort = nBlocks - raw % nBlocks, shortLen = Math.floor(raw / nBlocks);
+    const div = divisor(ecLen), blocks = [];
+    for (let i = 0, k = 0; i < nBlocks; i++) {
+      const d = data.slice(k, k + shortLen - ecLen + (i < nShort ? 0 : 1));
+      k += d.length;
+      const ec = remainder(d, div);
+      if (i < nShort) d.push(0);
+      blocks.push(d.concat(ec));
+    }
+    const words = [];
+    for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - ecLen || j >= nShort) words.push(b[i]); });
+    // Function patterns.
+    const size = v * 4 + 17;
+    const m = Array.from({length: size}, () => new Array(size).fill(false));
+    const fn = Array.from({length: size}, () => new Array(size).fill(false));
+    const set = (x, y, dark) => { m[y][x] = dark; fn[y][x] = true; };
+    for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+    for (const [cx, cy] of [[3, 3], [size - 4, 3], [3, size - 4]]) {
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const d = Math.max(Math.abs(dx), Math.abs(dy)), x = cx + dx, y = cy + dy;
+        if (x >= 0 && x < size && y >= 0 && y < size) set(x, y, d !== 2 && d !== 4);
+      }
+    }
+    const align = [];
+    if (v > 1) {
+      const n = Math.floor(v / 7) + 2;
+      const step = v === 32 ? 26 : Math.ceil((v * 4 + 4) / (n * 2 - 2)) * 2;
+      align.push(6);
+      for (let pos = size - 7; align.length < n; pos -= step) align.splice(1, 0, pos);
+    }
+    align.forEach((ax, i) => align.forEach((ay, j) => {
+      if ((i === 0 && j === 0) || (i === 0 && j === align.length - 1) || (i === align.length - 1 && j === 0)) return;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(ax + dx, ay + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+    }));
+    const drawFormat = mask => {
+      const d = (0 << 3) | mask;  // Error correction M is 0.
+      let r = d;
+      for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+      const b = ((d << 10) | r) ^ 0x5412;
+      for (let i = 0; i <= 5; i++) set(8, i, bit(b, i));
+      set(8, 7, bit(b, 6)); set(8, 8, bit(b, 7)); set(7, 8, bit(b, 8));
+      for (let i = 9; i < 15; i++) set(14 - i, 8, bit(b, i));
+      for (let i = 0; i < 8; i++) set(size - 1 - i, 8, bit(b, i));
+      for (let i = 8; i < 15; i++) set(8, size - 15 + i, bit(b, i));
+      set(8, size - 8, true);
+    };
+    drawFormat(0);
+    if (v >= 7) {
+      let r = v;
+      for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25);
+      const b = (v << 12) | r;
+      for (let i = 0; i < 18; i++) { const a = size - 11 + i % 3, c = Math.floor(i / 3); set(a, c, bit(b, i)); set(c, a, bit(b, i)); }
+    }
+    // Codewords in the zigzag.
+    let i = 0;
+    for (let right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) {
+        const x = right - j, y = ((right + 1) & 2) === 0 ? size - 1 - vert : vert;
+        if (!fn[y][x] && i < words.length * 8) { m[y][x] = bit(words[i >>> 3], 7 - (i & 7)); i++; }
+      }
+    }
+    // Pick the mask with the lowest (simplified) penalty.
+    const rule = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0,
+                  (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,
+                  (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+    const apply = k => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && rule[k](x, y)) m[y][x] = !m[y][x]; };
+    const penalty = () => {
+      let p = 0, dark = 0;
+      for (let a = 0; a < size; a++) for (const horizontal of [true, false]) {
+        let run = 1;
+        for (let b = 1; b <= size; b++) {
+          const same = b < size && (horizontal ? m[a][b] === m[a][b - 1] : m[b][a] === m[b - 1][a]);
+          if (same) run++; else { if (run >= 5) p += run - 2; run = 1; }
+        }
+      }
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+        if (m[y][x]) dark++;
+        if (x + 1 < size && y + 1 < size && m[y][x] === m[y][x + 1] && m[y][x] === m[y + 1][x] && m[y][x] === m[y + 1][x + 1]) p += 3;
+      }
+      return p + Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10;
+    };
+    let best = 0, bestPenalty = Infinity;
+    for (let k = 0; k < 8; k++) {
+      apply(k); drawFormat(k);
+      const p = penalty();
+      if (p < bestPenalty) { best = k; bestPenalty = p; }
+      apply(k);
+    }
+    apply(best); drawFormat(best);
+    return m;
+  };
+})();
+function drawQr(canvas, value) {
+  const m = qrEncode(value), scale = 4, quiet = 4, size = (m.length + quiet * 2) * scale;
+  canvas.width = canvas.height = size;
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, size, size);
+  g.fillStyle = '#000';
+  m.forEach((row, y) => row.forEach((dark, x) => { if (dark) g.fillRect((x + quiet) * scale, (y + quiet) * scale, scale, scale); }));
 }
 
-// ---- MQTT 3.1.1 over a secure WebSocket: just what DeskMate needs ----
+const embedded = /*DESKMATE_CONFIG*/null;
+const awayUrl = 'https://thesokka.github.io/deskmate-away/';
+const byId = id => document.getElementById(id);
+const text = new TextEncoder(), untext = new TextDecoder();
+const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const pad = n => String(n).padStart(2, '0');
+const hhmm = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+const readHHMM = s => { const [h, m] = (s || '0:0').split(':').map(Number); return h * 60 + m; };
+function clock(ms, tenths) {
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+  return (h ? h + ':' + pad(m) : m) + ':' + pad(s % 60) + (tenths ? '.' + Math.floor(ms / 100) % 10 : '');
+}
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'on') for (const [ev, fn] of Object.entries(v)) e.addEventListener(ev, fn);
+    else if (k === 'text') e.textContent = v;
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null) e.append(kid);
+  return e;
+}
+let toastTimer;
+function toast(message) { const t = byId('toast'); t.textContent = message; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2600); }
+function setState(message, kind) { byId('stateText').textContent = message; byId('state').className = kind || ''; }
+
+// ======================= Transports =======================
+// At home DeskMate serves this page over plain HTTP; anywhere else (GitHub Pages, a saved
+// file) it talks to DeskMate through the end-to-end encrypted relay.
+const away = !!(embedded && embedded.id) || location.protocol !== 'http:';
+document.querySelectorAll('.home-only').forEach(e => e.classList.toggle('hidden', away));
+let token = '', socket = null;
+const transport = {};
+
+// ---- Home: HTTP + WebSocket ----
+transport.home = {
+  async api(method, path, body) {
+    const r = await fetch('/api/app' + path, {method, cache: 'no-store', headers: {'X-DeskMate-Token': token, 'Content-Type': 'application/json'},
+                                              body: method === 'POST' ? JSON.stringify(body || {}) : undefined});
+    if (r.status === 401) { unpaired(); throw new Error('Not paired'); }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ('Error ' + r.status));
+    return data;
+  },
+  input(action) {
+    if (socket && socket.readyState === 1) socket.send(action);
+    else this.api('POST', '/input', {action}).catch(() => {});
+  },
+  start() {
+    // The live feed runs only while the app is on screen: a hidden or sleeping tab stops
+    // reading, and DeskMate would keep its unsent frames in scarce memory.
+    let retry = 0, delay = 3000;  // Grows while DeskMate turns the feed away (two viewers already).
+    const connect = () => {
+      clearTimeout(retry);
+      if (socket || !token || document.hidden) return;
+      try { socket = new WebSocket('ws://' + location.host + '/api/live?token=' + encodeURIComponent(token)); } catch (_) { return; }
+      socket.binaryType = 'arraybuffer';
+      socket.onmessage = e => {
+        delay = 3000;
+        if (typeof e.data !== 'string') { const b = new Uint8Array(e.data); const f = b.length === 1024 ? b : unpackBits(b); return f && drawFrame(f); }
+        try { const s = JSON.parse(e.data); if (s.timers) applyState(s); } catch (_) {}
+      };
+      socket.onclose = () => { socket = null; retry = setTimeout(connect, delay); delay = Math.min(delay * 2, 30000); };
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { connect(); refresh(true).catch(() => {}); return; }
+      if (socket) { socket.onclose = null; socket.close(); socket = null; }
+    });
+    connect();
+    byId('transportNote').textContent = 'Connected at home, directly to DeskMate.';
+    showAwayLink();
+  },
+};
+
+async function pair() {
+  byId('pairButton').disabled = true;
+  byId('pairStatus').textContent = 'Asking DeskMate…';
+  try {
+    const r = await fetch('/api/pair', {method: 'POST'});
+    if (!r.ok) throw new Error(await r.text());
+    const {id} = await r.json();
+    byId('pairStatus').textContent = 'Click the knob on DeskMate to allow this browser.';
+    for (let i = 0; i < 40; i++) {
+      await new Promise(res => setTimeout(res, 1000));
+      const poll = await (await fetch('/api/pair?id=' + id, {cache: 'no-store'})).json();
+      if (poll.state === 'approved' && poll.token) { token = poll.token; localStorage.setItem('deskmateToken', token); byId('pair').classList.add('hidden'); boot(); return; }
+      if (poll.state !== 'waiting') throw new Error(poll.state === 'declined' ? 'DeskMate declined.' : 'No answer from DeskMate. Try again.');
+    }
+    throw new Error('No answer from DeskMate. Try again.');
+  } catch (e) { byId('pairStatus').textContent = e.message; } finally { byId('pairButton').disabled = false; }
+}
+function unpaired() {
+  token = ''; localStorage.removeItem('deskmateToken');
+  if (socket) { socket.onclose = null; socket.close(); socket = null; }
+  showOnly('pair');
+  setState('Not paired', 'down');
+}
+
+// ---- Away: MQTT over a secure WebSocket, AES-GCM end to end (RelayProto.h) ----
 function lengthBytes(n) { const out = []; do { let b = n % 128; n = Math.floor(n / 128); if (n) b |= 128; out.push(b); } while (n); return out; }
 function str(s) { const b = text.encode(s); return [b.length >> 8, b.length & 255, ...b]; }
-function packet(type, body) { const out = new Uint8Array(1 + lengthBytes(body.length).length + body.length); const head = [type, ...lengthBytes(body.length)]; out.set(head); out.set(body, head.length); return out; }
+function packet(type, body) { const head = [type, ...lengthBytes(body.length)]; const out = new Uint8Array(head.length + body.length); out.set(head); out.set(body, head.length); return out; }
+let config = null, mqtt = null, online = false, deskmateUp = null, lastHeard = 0, key = null, counter = 0n;
+const session = crypto.getRandomValues(new Uint32Array(1))[0];
+const seen = new Map(), waiting = new Map();
+let requestId = 0, pendingAck = null;
 class Mqtt {
-  constructor(url, handlers) { this.url = url; this.on = handlers; this.backoff = 2000; this.buffer = new Uint8Array(0); }
+  constructor(url, on) { this.url = url; this.on = on; this.backoff = 2000; this.buffer = new Uint8Array(0); }
   connect() {
     const ws = this.ws = new WebSocket(this.url, ['mqtt']);
     ws.binaryType = 'arraybuffer';
     ws.onopen = () => {
-      const id = 'dm-away-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
-      let flags = 0x02;
-      const payload = [...str(id)];
+      let flags = 0x02; const payload = [...str('dm-app-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(16))];
       if (config.user) { flags |= 0x80; payload.push(...str(config.user)); }
       if (config.pass) { flags |= 0x40; payload.push(...str(config.pass)); }
       ws.send(packet(0x10, new Uint8Array([...str('MQTT'), 4, flags, 0, 60, ...payload])));
     };
-    ws.onmessage = event => this.receive(new Uint8Array(event.data));
-    ws.onclose = () => {
-      clearInterval(this.ping);
-      this.on.state(false);
-      setTimeout(() => this.connect(), this.backoff);
-      this.backoff = Math.min(this.backoff * 2, 30000);
-    };
+    ws.onmessage = e => this.receive(new Uint8Array(e.data));
+    ws.onclose = () => { clearInterval(this.ping); this.on.state(false); setTimeout(() => this.connect(), this.backoff); this.backoff = Math.min(this.backoff * 2, 30000); };
     ws.onerror = () => ws.close();
   }
   receive(bytes) {
-    const joined = new Uint8Array(this.buffer.length + bytes.length);
-    joined.set(this.buffer); joined.set(bytes, this.buffer.length);
+    const joined = new Uint8Array(this.buffer.length + bytes.length); joined.set(this.buffer); joined.set(bytes, this.buffer.length);
     let at = 0;
-    while (true) {
-      let length = 0, multiplier = 1, i = at + 1, done = false;
-      while (i < joined.length && i < at + 5) { const b = joined[i++]; length += (b & 127) * multiplier; multiplier *= 128; if (!(b & 128)) { done = true; break; } }
+    for (;;) {
+      let length = 0, mult = 1, i = at + 1, done = false;
+      while (i < joined.length && i < at + 5) { const b = joined[i++]; length += (b & 127) * mult; mult *= 128; if (!(b & 128)) { done = true; break; } }
       if (!done || i + length > joined.length) break;
-      this.handle(joined[at], joined.subarray(i, i + length));
-      at = i + length;
+      this.handle(joined[at], joined.subarray(i, i + length)); at = i + length;
     }
     this.buffer = joined.slice(at);
   }
   handle(head, body) {
     const type = head >> 4;
-    if (type === 2) {  // CONNACK
+    if (type === 2) {
       if (body[1] !== 0) { setState('Relay refused the connection', 'down'); this.ws.close(); return; }
       this.backoff = 2000;
       this.ping = setInterval(() => this.ws.readyState === 1 && this.ws.send(new Uint8Array([0xC0, 0])), 30000);
-      const topics = [...str('deskmate/' + config.id + '/d'), 0, ...str('deskmate/' + config.id + '/s'), 0];
-      this.ws.send(packet(0x82, new Uint8Array([0, 1, ...topics])));
+      this.ws.send(packet(0x82, new Uint8Array([0, 1, ...str('deskmate/' + config.id + '/d'), 0, ...str('deskmate/' + config.id + '/s'), 0])));
       this.on.state(true);
-    } else if (type === 3) {  // PUBLISH
-      const topicLength = body[0] << 8 | body[1];
-      const topic = untext.decode(body.subarray(2, 2 + topicLength));
-      const skip = 2 + topicLength + ((head >> 1) & 3 ? 2 : 0);
-      this.on.message(topic, body.slice(skip));
+    } else if (type === 3) {
+      const n = body[0] << 8 | body[1];
+      this.on.message(untext.decode(body.subarray(2, 2 + n)), body.slice(2 + n + ((head >> 1) & 3 ? 2 : 0)));
     }
   }
-  publish(topic, payload) {
-    if (!this.ws || this.ws.readyState !== 1) return false;
-    const body = new Uint8Array([...str(topic), ...payload]);
-    this.ws.send(packet(0x30, body));
-    return true;
-  }
+  publish(topic, payload) { if (!this.ws || this.ws.readyState !== 1) return false; this.ws.send(packet(0x30, new Uint8Array([...str(topic), ...payload]))); return true; }
 }
-
-// ---- End-to-end encryption (see RelayProto.h on DeskMate) ----
-let key = null;
-const session = crypto.getRandomValues(new Uint32Array(1))[0];
-let counter = 0n;
-const seen = new Map();  // Per DeskMate session: highest counter and the recent ones.
-function hex(s) { return new Uint8Array(s.match(/../g).map(h => parseInt(h, 16))); }
+const hexBytes = s => new Uint8Array(s.match(/../g).map(h => parseInt(h, 16)));
 async function seal(type, body) {
   counter += 1n;
-  const nonce = new Uint8Array(12), view = new DataView(nonce.buffer);
-  view.setUint32(0, session); view.setUint32(4, Number(counter >> 32n)); view.setUint32(8, Number(counter & 0xffffffffn));
+  const nonce = new Uint8Array(12), v = new DataView(nonce.buffer);
+  v.setUint32(0, session); v.setUint32(4, Number(counter >> 32n)); v.setUint32(8, Number(counter & 0xffffffffn));
   const plain = new Uint8Array(5 + body.length);
-  new DataView(plain.buffer).setUint32(0, Math.floor(Date.now() / 1000));
-  plain[4] = type.charCodeAt(0);
-  plain.set(body, 5);
+  new DataView(plain.buffer).setUint32(0, Math.floor(Date.now() / 1000)); plain[4] = type.charCodeAt(0); plain.set(body, 5);
   const sealed = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv: nonce, additionalData: text.encode('dm1b'), tagLength: 128}, key, plain));
-  const out = new Uint8Array(13 + sealed.length);
-  out[0] = 1; out.set(nonce, 1); out.set(sealed, 13);
-  return out;
+  const out = new Uint8Array(13 + sealed.length); out[0] = 1; out.set(nonce, 1); out.set(sealed, 13); return out;
 }
-async function open(message) {
+async function unseal(message) {
   if (message.length < 34 || message[0] !== 1) return null;
-  const nonce = message.slice(1, 13), view = new DataView(nonce.buffer);
+  const nonce = message.slice(1, 13), v = new DataView(nonce.buffer);
   let plain;
-  try { plain = new Uint8Array(await crypto.subtle.decrypt({name: 'AES-GCM', iv: nonce, additionalData: text.encode('dm1d'), tagLength: 128}, key, message.slice(13))); }
-  catch (_) { return null; }
-  const sender = view.getUint32(0), sequence = BigInt(view.getUint32(4)) << 32n | BigInt(view.getUint32(8));
-  // Two DeskMate tasks send, so messages may arrive a little out of order: accept
-  // anything new within the last 64, and never the same counter twice.
-  const record = seen.get(sender) || {top: 0n, recent: new Set()};
-  if (sequence + 64n <= record.top || record.recent.has(sequence)) return null;  // Replayed.
-  record.recent.add(sequence);
-  if (sequence > record.top) record.top = sequence;
-  for (const old of record.recent) if (old + 64n <= record.top) record.recent.delete(old);
-  seen.set(sender, record);
+  try { plain = new Uint8Array(await crypto.subtle.decrypt({name: 'AES-GCM', iv: nonce, additionalData: text.encode('dm1d'), tagLength: 128}, key, message.slice(13))); } catch (_) { return null; }
+  const sender = v.getUint32(0), seq = BigInt(v.getUint32(4)) << 32n | BigInt(v.getUint32(8));
+  const rec = seen.get(sender) || {top: 0n, recent: new Set()};
+  if (seq + 64n <= rec.top || rec.recent.has(seq)) return null;
+  rec.recent.add(seq); if (seq > rec.top) rec.top = seq;
+  for (const old of rec.recent) if (old + 64n <= rec.top) rec.recent.delete(old);
+  seen.set(sender, rec);
   return {type: String.fromCharCode(plain[4]), body: plain.subarray(5)};
 }
 function unpackBits(input) {
-  const out = new Uint8Array(1024);
-  let i = 0, o = 0;
-  while (i < input.length && o < 1024) {
-    const h = input[i++];
-    if (h < 128) { out.set(input.subarray(i, i + h + 1), o); i += h + 1; o += h + 1; }
-    else if (h > 128) { out.fill(input[i++], o, o + 257 - h); o += 257 - h; }
-  }
+  const out = new Uint8Array(1024); let i = 0, o = 0;
+  while (i < input.length && o < 1024) { const h = input[i++]; if (h < 128) { out.set(input.subarray(i, i + h + 1), o); i += h + 1; o += h + 1; } else if (h > 128) { out.fill(input[i++], o, o + 257 - h); o += 257 - h; } }
   return o === 1024 ? out : null;
 }
-
-// ---- DeskMate ----
-let mqtt, online = false, deskmateUp = null, lastHeard = 0, pendingAck = null;
-async function send(type, body = new Uint8Array(0)) {
-  if (!online) return false;
-  return mqtt.publish('deskmate/' + config.id + '/b', await seal(type, body));
+// Sealing is asynchronous, so messages go through one queue: each is numbered, sealed and
+// published in turn. DeskMate drops any message numbered below one it has already seen
+// (replay protection), so two sealed side by side must never leave out of order.
+let sendChain = Promise.resolve();
+function relaySend(type, body = new Uint8Array(0)) {
+  const sent = sendChain.then(async () => online && mqtt.publish('deskmate/' + config.id + '/b', await seal(type, body)));
+  sendChain = sent.catch(() => false);
+  return sent;
 }
-const screen = byId('screen').getContext('2d');
-const pixels = screen.createImageData(128, 64);
+transport.away = {
+  // Reads try twice (a phone waking up may find its relay link stale); changes go once, so
+  // nothing is ever added twice.
+  async api(method, path, body) {
+    try { return await this.once(method, path, body, method === 'GET' ? 5000 : 9000); }
+    catch (e) { if (method !== 'GET' || !/did not answer/.test(e.message)) throw e; return this.once(method, path, body, 9000); }
+  },
+  once(method, path, body, wait) {
+    return new Promise(async (resolve, reject) => {
+      const id = ++requestId;
+      const timer = setTimeout(() => { waiting.delete(id); reject(new Error('DeskMate did not answer. Try again.')); }, wait);
+      waiting.set(id, reply => { clearTimeout(timer); waiting.delete(id); reply.s === 200 ? resolve(reply.b || {}) : reject(new Error((reply.b && reply.b.error) || ('Error ' + reply.s))); });
+      const request = JSON.stringify({id, m: method, p: path, b: method === 'POST' ? JSON.stringify(body || {}) : ''});
+      if (!await relaySend('q', text.encode(request))) { clearTimeout(timer); waiting.delete(id); reject(new Error('Not connected to the relay yet.')); }
+    });
+  },
+  input(action) { relaySend('i', text.encode(action)); },
+  async start() {
+    key = await crypto.subtle.importKey('raw', hexBytes(config.key), 'AES-GCM', false, ['encrypt', 'decrypt']);
+    const ports = {'broker.emqx.io': 8084, 'test.mosquitto.org': 8081};
+    const url = config.ws || 'wss://' + config.broker + ':' + (ports[config.broker] || 8884) + '/mqtt';
+    byId('transportNote').textContent = 'Away: through the encrypted relay at ' + new URL(url).host + ', which only passes along data it cannot read.';
+    mqtt = new Mqtt(url, {
+      state: up => { online = up; if (up) { relaySend('h'); refresh(); } },
+      message: async (topic, payload) => {
+        if (topic.endsWith('/s')) { deskmateUp = untext.decode(payload) === '1'; if (deskmateUp) relaySend('h'); return; }
+        const m = await unseal(payload); if (!m) return;
+        lastHeard = Date.now(); deskmateUp = true;
+        if (m.type === 'f') { const f = unpackBits(m.body); if (f) drawFrame(f); }
+        else if (m.type === 'Q') { try { const r = JSON.parse(untext.decode(m.body)); const w = waiting.get(r.id); if (w) w(r); } catch (_) {} }
+        else if (m.type === 'a' && pendingAck) { try { pendingAck(JSON.parse(untext.decode(m.body))); } catch (_) {} }
+      },
+    });
+    mqtt.connect();
+    setInterval(() => { if (!document.hidden) relaySend('h'); }, 5000);
+  },
+};
+function relayConfig() {
+  if (embedded && embedded.id) return embedded;
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (p.get('id') && p.get('key')) {
+    const c = {id: p.get('id'), key: p.get('key'), broker: p.get('broker') || 'broker.hivemq.com', ws: p.get('ws') || '', user: p.get('user') || '', pass: p.get('pass') || ''};
+    try { localStorage.setItem('deskmateAway', JSON.stringify(c)); } catch (_) {}
+    return c;
+  }
+  try { return JSON.parse(localStorage.getItem('deskmateAway') || 'null'); } catch (_) { return null; }
+}
+const T = () => away ? transport.away : transport.home;
+const api = (method, path, body) => T().api(method, path, body);
+const post = (path, body, done) => api('POST', path, body).then(async r => { if (done) toast(done); await refresh(true); return r; }).catch(e => { toast(e.message); throw e; });
+
+// ======================= Live screen and knob =======================
+const screen = byId('screen').getContext('2d'), pixels = screen.createImageData(128, 64);
 function drawFrame(bytes) {
+  if (bytes.length !== 1024) return;
   for (let y = 0; y < 64; y++) for (let x = 0; x < 128; x++) {
     const on = (bytes[(y >> 3) * 128 + x] >> (y & 7)) & 1;
-    pixels.data.set(on ? [150,230,255,255] : [8,10,14,255], (y * 128 + x) * 4);
+    pixels.data.set(on ? [150, 230, 255, 255] : [8, 10, 14, 255], (y * 128 + x) * 4);
   }
   screen.putImageData(pixels, 0, 0);
 }
-function showLive(status) {
-  if (deskmateUp === false) return setState('DeskMate is offline', 'down');
-  if (!online) return setState('Connecting to the relay…', '');
-  if (Date.now() - lastHeard > 12000) return setState('Waiting for DeskMate…', '');
-  if (!status) return setState('Live', 'live');
-  const minutes = Math.floor((status.uptime || 0) / 60);
-  setState('Live · ' + status.version + ' · up ' + (minutes >= 60 ? Math.floor(minutes / 60) + 'h ' : '') + (minutes % 60) + 'm' +
-           (status.trial ? ' · trial' : ''), 'live');
-}
-let lastStatus = null;
-async function onMessage(topic, payload) {
-  if (topic.endsWith('/s')) {
-    deskmateUp = untext.decode(payload) === '1';
-    if (deskmateUp) send('h');
-    return showLive(lastStatus);
-  }
-  const message = await open(payload);
-  if (!message) return;
-  lastHeard = Date.now();
-  deskmateUp = true;
-  if (message.type === 'f') { const frame = unpackBits(message.body); if (frame) drawFrame(frame); }
-  else if (message.type === 's') { try { lastStatus = JSON.parse(untext.decode(message.body)); } catch (_) {} }
-  else if (message.type === 'l') byId('log').textContent = untext.decode(message.body) || 'No events yet.';
-  else if (message.type === 'a' && pendingAck) { try { pendingAck(JSON.parse(untext.decode(message.body))); } catch (_) {} }
-  showLive(lastStatus);
-}
-
-// Knob controls.
-const input = action => send('i', text.encode(action));
-document.querySelectorAll('[data-input]').forEach(button => button.addEventListener('click', () => input(button.dataset.input)));
-const keys = {ArrowLeft:'left', ArrowUp:'left', ArrowRight:'right', ArrowDown:'right', Enter:'click', ' ':'double', Escape:'hold', Backspace:'hold'};
-document.addEventListener('keydown', event => {
-  if (event.target.tagName === 'INPUT' || event.metaKey || event.ctrlKey || event.altKey) return;
-  const action = keys[event.key];
-  if (!action || (event.target.tagName === 'BUTTON' && (event.key === 'Enter' || event.key === ' '))) return;
-  event.preventDefault();
-  input(action);
+document.querySelectorAll('[data-input]').forEach(b => b.addEventListener('click', () => T().input(b.dataset.input)));
+const KEYS = {ArrowLeft: 'left', ArrowUp: 'left', ArrowRight: 'right', ArrowDown: 'right', Enter: 'click', ' ': 'double', Escape: 'hold', Backspace: 'hold'};
+document.addEventListener('keydown', e => {
+  if (current !== 'home' || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const a = KEYS[e.key]; if (!a || (e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' '))) return;
+  e.preventDefault(); T().input(a);
 });
 let wheel = 0, wheelAt = 0;
-byId('screen').addEventListener('wheel', event => {
-  event.preventDefault();
-  wheel += event.deltaY;
-  const now = Date.now();
-  if (Math.abs(wheel) >= 40 && now - wheelAt > 80) { input(wheel > 0 ? 'right' : 'left'); wheel = 0; wheelAt = now; }
-}, {passive: false});
+byId('screen').addEventListener('wheel', e => { e.preventDefault(); wheel += e.deltaY; const n = Date.now(); if (Math.abs(wheel) >= 40 && n - wheelAt > 80) { T().input(wheel > 0 ? 'right' : 'left'); wheel = 0; wheelAt = n; } }, {passive: false});
 
-// Firmware update in acknowledged 4 KB pieces.
-function request(type, body, timeout = 10000) {
-  return new Promise(async resolve => {
-    const timer = setTimeout(() => { pendingAck = null; resolve(null); }, timeout);
-    pendingAck = reply => { clearTimeout(timer); pendingAck = null; resolve(reply); };
-    if (!await send(type, body)) { clearTimeout(timer); pendingAck = null; resolve(null); }
-  });
+// ======================= Tabs and data =======================
+let current = 'home', live = null, data = null, prefs = null, stateAt = 0;
+function showOnly(which) {
+  byId('pair').classList.toggle('hidden', which !== 'pair');
+  byId('missing').classList.toggle('hidden', which !== 'missing');
+  document.querySelector('main').querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', which === 'app' && s.dataset.tab === current));
+  byId('tabs').classList.toggle('hidden', which !== 'app');
 }
-async function retried(type, body, timeout) {
-  for (let attempt = 0; attempt < 4; attempt++) { const reply = await request(type, body, timeout); if (reply) return reply; }
-  throw new Error('DeskMate stopped answering. Try again.');
+function go(tab) {
+  current = tab;
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === tab));
+  document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
+  if (tab === 'settings' || tab === 'more') loadSettings();
+  if (tab === 'more') { loadLog(); }
+  render();
 }
-byId('upload').addEventListener('click', async () => {
-  const file = byId('firmware').files[0];
-  if (!file) { byId('uploadResult').textContent = 'Choose a .bin file first.'; return; }
-  const image = new Uint8Array(await file.arrayBuffer());
-  if (image[0] !== 0xE9) { byId('uploadResult').textContent = 'That file is not a DeskMate firmware image.'; return; }
-  byId('upload').disabled = true;
-  byId('uploadProgress').hidden = false;
-  const started = Date.now();
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+
+// The live state arrives once a second (over the socket at home); the lists are fetched
+// again only when DeskMate says they changed. One request at a time keeps DeskMate's
+// memory free for Wi-Fi.
+let dataKey = '';
+async function applyState(s, force) {
+  live = s; stateAt = Date.now();
+  const key = s.revision + ':' + s.doneMask;
+  if (force || !data || key !== dataKey) { data = await api('GET', '/data'); dataKey = key; }
+  setState('Live · ' + s.version + (s.time ? ' · ' + s.time.slice(0, 5) : ''), 'live');
+  render();
+}
+async function refresh(force) {
   try {
-    const size = new Uint8Array(4); new DataView(size.buffer).setUint32(0, image.length);
-    let reply = await retried('u', size, 20000);
-    if (!reply.ok) throw new Error(reply.error);
-    let offset = 0;
-    while (offset < image.length) {
-      const piece = image.subarray(offset, offset + 4096);
-      const body = new Uint8Array(4 + piece.length);
-      new DataView(body.buffer).setUint32(0, offset);
-      body.set(piece, 4);
-      reply = await retried('c', body, 8000);
-      if (!reply.ok) throw new Error(reply.error);
-      offset = reply.next;
-      const share = offset / image.length, elapsed = (Date.now() - started) / 1000;
-      byId('uploadProgress').value = 100 * share;
-      byId('uploadResult').textContent = 'Sending… ' + Math.round(100 * share) + '%' +
-        (share > 0.05 ? ', about ' + Math.ceil(elapsed * (1 - share) / share) + ' s left' : '');
-    }
-    reply = await retried('e', new Uint8Array(0), 15000);
-    if (!reply.ok) throw new Error(reply.error);
-    byId('uploadResult').textContent = 'Uploaded and verified. DeskMate is installing it and will restart.';
-  } catch (error) {
-    send('x');
-    byId('uploadResult').textContent = error.message;
-  } finally {
-    byId('upload').disabled = false;
+    await applyState(await api('GET', '/state'), force);
+  } catch (e) {
+    if (away && !online) setState('Connecting to the relay…', '');
+    else if (away && deskmateUp === false) setState('DeskMate is offline', 'down');
+    else setState(e.message, 'down');
   }
-});
-
-async function start() {
-  if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{64}$/.test(config.key)) {
-    byId('remote').hidden = true;
-    byId('missing').style.display = 'block';
-    setState('Not set up', 'down');
-    return;
-  }
-  if (!window.crypto || !crypto.subtle) { setState('This browser cannot decrypt (needs a secure page)', 'down'); return; }
-  key = await crypto.subtle.importKey('raw', hex(config.key), 'AES-GCM', false, ['encrypt', 'decrypt']);
-  // Public brokers' secure WebSocket ports; a private broker can give its own with ws=.
-  const ports = {'broker.emqx.io': 8084, 'test.mosquitto.org': 8081};
-  const url = config.ws || 'wss://' + config.broker + ':' + (ports[config.broker] || 8884) + '/mqtt';
-  byId('broker').textContent = new URL(url).host;
-  mqtt = new Mqtt(url, {
-    state: up => { online = up; if (up) { send('h'); send('l'); } showLive(lastStatus); },
-    message: onMessage,
-  });
-  setState('Connecting to the relay…', '');
-  mqtt.connect();
-  // Say hello while the page is open, so DeskMate keeps sending the screen.
-  setInterval(() => { if (!document.hidden) send('h'); showLive(lastStatus); }, 5000);
-  setInterval(() => { if (!document.hidden) send('l'); }, 15000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) send('h'); });
-  byId('screen').focus();
 }
-byId('forgetAway').addEventListener('click', event => {
-  event.preventDefault();
-  try { localStorage.removeItem('deskmateAway'); } catch (_) {}
-  location.replace(location.pathname);
-});
-start();
+async function loadSettings() { try { prefs = await api('GET', '/settings'); renderSettings(); renderNetworks(); } catch (_) {} }
+async function loadLog() { try { byId('log').textContent = (await api('GET', '/log')).text || 'No events yet.'; } catch (e) { byId('log').textContent = e.message; } }
+byId('logRefresh').onclick = loadLog;
+
+// Live times keep counting between updates.
+const since = () => live ? Date.now() - stateAt : 0;
+// Lists are rebuilt when fresh data arrives, but never under an open editor or the cursor.
+const busy = id => { const box = byId(id); return box.contains(document.activeElement) || !!box.querySelector('details[open]'); };
+function render() {
+  if (!live || !data) return;
+  if (current === 'home') renderHome();
+  if (current === 'alarms' && editingAlarm < 0 && !busy('alarmList')) renderAlarms();
+  if (current === 'timers' && !busy('timerList')) renderTimers();
+  if (current === 'focus') renderFocus();
+  if (current === 'tasks') { if (editingTask < 0 && !busy('taskList')) renderTasks(); if (editingEvent < 0 && !busy('eventList')) renderEvents(); }
+  if (current === 'more') renderUpdate();
+  const banner = byId('releaseBanner');
+  banner.classList.toggle('hidden', !live.update);
+  if (live.update) byId('releaseText').textContent = 'DeskMate ' + live.update + ' is out.';
+}
+byId('releaseInstall').onclick = byId('updateInstall').onclick = () => post('/update/install', {}, 'Downloading the update…');
+byId('updateCheck').onclick = () => post('/update/check', {}, 'Checking…');
+
+function renderHome() {
+  const g = byId('glance'); g.replaceChildren();
+  const add = (title, value) => g.append(el('div', {}, el('small', {text: title}), el('div', {class: 'big', style: 'font-size:1.15rem;font-weight:700', text: value})));
+  add('Time', live.time ? live.time.slice(0, 5) : '--:--');
+  add('Weather', live.temperature != null ? live.temperature + '°' + live.unit : '—');
+  const running = live.timers.filter(t => t.phase === 'running');
+  add('Timers', running.length ? clock(Math.max(0, Math.min(...running.map(t => t.remainingMs)) - since())) : 'none running');
+  add('Focus', live.focus.running ? clock(Math.max(0, live.focus.remainingMs - since())) + ' ' + live.focus.phase : live.focus.fresh ? 'ready' : 'paused');
+  const next = nextAlarm(); add('Next alarm', next || 'none');
+  const done = data.tasks.filter(t => t.label && t.done).length, total = data.tasks.filter(t => t.label).length;
+  add('Tasks', total ? done + ' of ' + total : 'none');
+}
+function nextAlarm() {
+  if (!live.time) return '';
+  const now = readHHMM(live.time.slice(0, 5)), today = new Date().getDay();
+  let best = null;
+  data.alarms.forEach(a => {
+    if (!a.enabled || !a.days) return;
+    for (let d = 0; d < 8; d++) {
+      if (!(a.days & (1 << ((today + d) % 7)))) continue;
+      const delta = d * 1440 + a.minute - now;
+      if (delta > 0 || (d === 0 && delta === 0)) { if (!best || delta < best.delta) best = {delta, a}; break; }
+    }
+  });
+  return best ? hhmm(best.a.minute) + (best.delta >= 1440 ? ' ' + DAYS[(today + Math.floor((now + best.delta) / 1440)) % 7] : '') : '';
+}
+
+// Every 250 ms: only the numbers that count, so nothing under the cursor is rebuilt.
+function tick() {
+  if (current === 'home') renderHome();
+  if (current === 'focus') renderFocus();
+  if (current === 'timers') {
+    live.timers.forEach((t, i) => { const e = byId('tt' + i); if (e && t.phase === 'running') e.textContent = clock(Math.max(0, t.remainingMs - since())); });
+    const w = live.stopwatch; byId('watchTime').textContent = clock(w.elapsedMs + (w.running ? since() : 0), true);
+  }
+}
+
+// ---- Alarms ----
+let editingAlarm = -1;
+function daysPicker(mask) {
+  return el('div', {class: 'days'}, DAYS.map((d, bit) => el('label', {}, el('input', {type: 'checkbox', 'data-bit': bit, checked: !!(mask & (1 << bit))}), el('span', {text: d}))));
+}
+function readDays(container) { let m = 0; container.querySelectorAll('input[data-bit]').forEach(i => { if (i.checked) m |= 1 << i.dataset.bit; }); return m; }
+function daysText(mask) { return mask === 127 ? 'Every day' : mask === 62 ? 'Weekdays' : mask === 65 ? 'Weekends' : DAYS.filter((_, b) => mask & (1 << b)).join(' ') || 'No days'; }
+function renderAlarms() {
+  const list = byId('alarmList'); list.replaceChildren();
+  const used = data.alarms.map((a, i) => ({a, i})).filter(({a, i}) => a.enabled || i === editingAlarm || a.label !== 'Alarm ' + (i + 1) || a.minute !== 420);
+  if (!used.length) list.append(el('p', {class: 'mute', text: 'No alarms yet. Add one with ＋ New.'}));
+  used.forEach(({a, i}) => {
+    if (i === editingAlarm) return list.append(alarmEditor(a, i));
+    const sw = el('label', {class: 'switch'}, el('input', {type: 'checkbox', checked: a.enabled, on: {change: e => post('/alarm', {i, enabled: e.target.checked}, e.target.checked ? 'Alarm on' : 'Alarm off').catch(() => e.target.checked = !e.target.checked)}}), el('span'));
+    list.append(el('div', {class: 'item'}, el('div', {class: 'main', on: {click: () => { editingAlarm = i; renderAlarms(); }}, style: 'cursor:pointer'},
+      el('div', {class: 'big', text: hhmm(a.minute)}), el('div', {class: 'sub', text: a.label + ' · ' + daysText(a.days) + (a.once ? ' · once' : '')})), sw));
+  });
+}
+function alarmEditor(a, i) {
+  const label = el('input', {maxlength: 28, value: a.label}), time = el('input', {type: 'time', value: hhmm(a.minute)});
+  const days = daysPicker(a.days || 127), once = el('input', {type: 'checkbox', checked: a.once, class: 'fit'});
+  return el('div', {class: 'item', style: 'display:block'}, el('div', {class: 'grid2'}, el('label', {}, 'Time', time), el('label', {}, 'Name', label)), days,
+    el('label', {class: 'row'}, once, el('span', {text: 'Ring once, then switch off'})),
+    el('div', {class: 'row', style: 'margin-top:.5rem'},
+      el('button', {text: 'Save', on: {click: () => post('/alarm', {i, label: label.value, minute: readHHMM(time.value), days: readDays(days), once: once.checked, enabled: true}, 'Alarm saved').then(() => { editingAlarm = -1; renderAlarms(); })}}),
+      el('button', {class: 'ghost', text: 'Cancel', on: {click: () => { editingAlarm = -1; renderAlarms(); }}}),
+      el('button', {class: 'bad fit', text: 'Delete', on: {click: () => post('/alarm/delete', {i}, 'Alarm deleted').then(() => { editingAlarm = -1; renderAlarms(); })}})));
+}
+byId('addAlarm').onclick = () => post('/alarm', {minute: 420, days: 62}, 'New alarm: set its time').then(r => { editingAlarm = r.i; renderAlarms(); });
+
+// ---- Timers and stopwatch ----
+function renderTimers() {
+  const list = byId('timerList'); list.replaceChildren();
+  live.timers.forEach((t, i) => {
+    const left = t.phase === 'running' ? Math.max(0, t.remainingMs - since()) : t.remainingMs;
+    const controls = el('div', {class: 'row fit'},
+      el('button', {class: 'small', text: t.phase === 'running' ? 'Pause' : 'Start', on: {click: () => post('/timer', {i, action: t.phase === 'running' ? 'pause' : 'start'})}}),
+      el('button', {class: 'small ghost', text: 'Reset', disabled: t.phase === 'idle', on: {click: () => post('/timer', {i, action: 'reset'}, 'Timer reset')}}));
+    const item = el('div', {class: 'item timer'}, el('div', {class: 'main'}, el('div', {class: 'big', id: 'tt' + i, text: clock(left)}),
+      el('div', {class: 'sub', text: 'Timer ' + (i + 1) + ' · ' + t.phase + (t.phase === 'idle' ? '' : ' · set ' + clock(t.preset * 1000))})), controls);
+    list.append(item);
+    if (t.phase === 'idle') {
+      const h = el('input', {type: 'number', min: 0, max: 23, value: Math.floor(t.preset / 3600)});
+      const m = el('input', {type: 'number', min: 0, max: 59, value: Math.floor(t.preset / 60) % 60});
+      const s = el('input', {type: 'number', min: 0, max: 59, value: t.preset % 60});
+      list.append(el('details', {}, el('summary', {class: 'sub', text: 'Change Timer ' + (i + 1)}),
+        el('div', {class: 'row'}, el('label', {}, 'Hours', h), el('label', {}, 'Minutes', m), el('label', {}, 'Seconds', s),
+          el('button', {class: 'fit', text: 'Save', on: {click: () => post('/timer', {i, seconds: +h.value * 3600 + +m.value * 60 + +s.value}, 'Timer saved')}}))));
+    }
+  });
+  const w = live.stopwatch, elapsed = w.elapsedMs + (w.running ? since() : 0);
+  byId('watchTime').textContent = clock(elapsed, true);
+  byId('watchLaps').textContent = w.laps.length ? 'Laps: ' + w.laps.map(l => clock(l, true)).join(' · ') : (w.running ? 'Running' : '');
+  byId('watchToggle').textContent = w.running ? 'Pause' : (elapsed ? 'Resume' : 'Start');
+  byId('watchLap').disabled = !w.running; byId('watchReset').disabled = w.running || !elapsed;
+}
+byId('watchToggle').onclick = () => post('/stopwatch', {action: 'toggle'});
+byId('watchLap').onclick = () => post('/stopwatch', {action: 'lap'});
+byId('watchReset').onclick = () => post('/stopwatch', {action: 'reset'}, 'Stopwatch reset');
+
+// ---- Focus ----
+function renderFocus() {
+  const f = live.focus, left = f.running ? Math.max(0, f.remainingMs - since()) : f.remainingMs;
+  byId('focusClock').textContent = clock(left);
+  byId('focusPhase').textContent = (f.phase === 'work' ? 'Focus' : f.phase === 'short' ? 'Short break' : 'Long break') + (f.running ? '' : f.fresh ? ' · ready' : ' · paused');
+  byId('focusArc').setAttribute('stroke-dashoffset', 276.5 * (1 - (f.totalMs ? left / f.totalMs : 0)));
+  const r = byId('focusRounds'); r.replaceChildren();
+  for (let k = 0; k < f.rounds; k++) r.append(el('span', {class: 'chip', text: k < f.cycleDone ? '●' : '○'}));
+  byId('focusToggle').textContent = f.running ? 'Pause' : f.fresh ? 'Start' : 'Resume';
+  if (document.activeElement.tagName !== 'INPUT') {
+    byId('fWork').value = data.focus.work; byId('fShort').value = data.focus.short; byId('fLong').value = data.focus.long; byId('fRounds').value = data.focus.rounds;
+  }
+}
+byId('focusToggle').onclick = () => post('/focus', {action: 'toggle'});
+byId('focusSkip').onclick = () => post('/focus', {action: 'skip'}, 'Skipped');
+byId('focusReset').onclick = () => post('/focus', {action: 'reset'}, 'Focus reset');
+byId('focusSave').onclick = () => post('/focus', {work: +byId('fWork').value, short: +byId('fShort').value, long: +byId('fLong').value, rounds: +byId('fRounds').value}, 'Lengths saved');
+
+// ---- Tasks and countdowns ----
+let editingTask = -1, editingEvent = -1;
+function renderTasks() {
+  const list = byId('taskList'); list.replaceChildren();
+  const used = data.tasks.map((t, i) => ({t, i})).filter(({t, i}) => t.label || i === editingTask);
+  if (!used.length) list.append(el('p', {class: 'mute', text: 'No tasks yet. Add one with ＋ New.'}));
+  used.forEach(({t, i}) => {
+    if (i === editingTask) {
+      const label = el('input', {maxlength: 28, value: t.label, placeholder: 'Task'});
+      const time = el('input', {type: 'time', value: t.reminder < 1440 ? hhmm(t.reminder) : ''});
+      return list.append(el('div', {class: 'item', style: 'display:block'}, el('div', {class: 'grid2'}, el('label', {}, 'Task', label), el('label', {}, 'Reminder (optional)', time)),
+        el('div', {class: 'row'}, el('button', {text: 'Save', on: {click: () => post('/task', {i, label: label.value, reminder: time.value ? readHHMM(time.value) : 1440}, 'Task saved').then(() => { editingTask = -1; renderTasks(); })}}),
+          el('button', {class: 'ghost', text: 'Cancel', on: {click: () => { editingTask = -1; renderTasks(); }}}),
+          el('button', {class: 'bad fit', hidden: !t.label, text: 'Delete', on: {click: () => post('/task/delete', {i}, 'Task deleted').then(() => { editingTask = -1; renderTasks(); })}}))));
+    }
+    const box = el('input', {type: 'checkbox', class: 'check', checked: t.done, on: {change: e => post('/task/done', {i, done: e.target.checked}).catch(() => e.target.checked = !e.target.checked)}});
+    list.append(el('div', {class: 'item'}, box, el('div', {class: 'main', style: 'cursor:pointer', on: {click: () => { editingTask = i; renderTasks(); }}},
+      el('div', {style: t.done ? 'text-decoration:line-through;opacity:.6' : '', text: t.label}), el('div', {class: 'sub', text: t.reminder < 1440 ? 'Reminder ' + hhmm(t.reminder) : 'No reminder'}))));
+  });
+}
+byId('addTask').onclick = () => { const free = data.tasks.findIndex(t => !t.label); if (free < 0) return toast('All eight task slots are in use.'); editingTask = free; renderTasks(); };
+function renderEvents() {
+  const list = byId('eventList'); list.replaceChildren();
+  const used = data.events.map((e, i) => ({e, i})).filter(({e, i}) => e.date || i === editingEvent);
+  if (!used.length) list.append(el('p', {class: 'mute', text: 'Count down to a trip, a deadline or a birthday.'}));
+  used.forEach(({e, i}) => {
+    if (i === editingEvent) {
+      const label = el('input', {maxlength: 16, value: e.label, placeholder: 'Event'});
+      const date = el('input', {type: 'date', value: e.date ? String(e.date).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3') : ''});
+      return list.append(el('div', {class: 'item', style: 'display:block'}, el('div', {class: 'grid2'}, el('label', {}, 'Name', label), el('label', {}, 'Date', date)),
+        el('div', {class: 'row'}, el('button', {text: 'Save', on: {click: () => post('/event', {i, label: label.value, date: +date.value.replaceAll('-', '')}, 'Countdown saved').then(() => { editingEvent = -1; renderEvents(); })}}),
+          el('button', {class: 'ghost', text: 'Cancel', on: {click: () => { editingEvent = -1; renderEvents(); }}}),
+          el('button', {class: 'bad fit', hidden: !e.date, text: 'Delete', on: {click: () => post('/event/delete', {i}, 'Countdown deleted').then(() => { editingEvent = -1; renderEvents(); })}}))));
+    }
+    list.append(el('div', {class: 'item', style: 'cursor:pointer', on: {click: () => { editingEvent = i; renderEvents(); }}},
+      el('div', {class: 'main'}, el('div', {text: e.label}), el('div', {class: 'sub', text: String(e.date).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3')})),
+      el('div', {class: 'big fit', text: e.days == null ? '' : e.days === 0 ? 'Today' : e.days < 0 ? 'Done' : e.days + 'd'})));
+  });
+}
+byId('addEvent').onclick = () => { const free = data.events.findIndex(e => !e.date); if (free < 0) return toast('All three countdowns are in use.'); editingEvent = free; renderEvents(); };
+
+// ---- Settings: built from a list, each change saved at once ----
+const SETTINGS = [
+  ['Display', [['brightnessPercent', 'Brightness %', 'number', 5, 100], ['dimSeconds', 'Dim after (s, 0 never)', 'number', 0, 3600],
+               ['sleepSeconds', 'Blank after (s, 0 never)', 'number', 0, 3600], ['idleMode', 'When idle', 'select', ['Dim', 'Ambient scene']],
+               ['ambientScene', 'Ambient scene', 'select', ['Auto', 'Sky', 'Night', 'Orbit']], ['ambientBrightness', 'Ambient brightness %', 'number', 5, 100]]],
+  ['Clock', [['clockFace', 'Face', 'select', ['Classic', 'Big', 'Analog', 'Minimal', 'Flip', 'Words', 'Orbit', 'Pulse']], ['homeSeconds', 'Seconds on Home', 'toggle'],
+             ['timezone', 'Time zone (POSIX rule, e.g. MST7)', 'text'], ['fahrenheit', 'Fahrenheit', 'toggle']]],
+  ['Appearance', [['animation', 'Animation', 'select', ['Off', 'Calm', 'Lively']], ['transition', 'Transitions', 'select', ['Slide', 'Fade', 'Zoom', 'None']],
+                  ['companion', 'Companion', 'toggle'], ['expressive', 'Expressive companion', 'toggle'], ['burnIn', 'Burn-in care', 'toggle'], ['orbitStars', 'Orbit stars', 'toggle']]],
+  ['Sound', [['volume', 'Volume', 'select', ['Quiet', 'Normal', 'Loud']], ['gentleAlarms', 'Gentle alarms (grow louder)', 'toggle'], ['startupChime', 'Boot chime', 'toggle'],
+             ['hourlyChime', 'Hourly chime', 'toggle'], ['alarmSound', 'Alarm sound', 'toggle'], ['timerSound', 'Timer sound', 'toggle'], ['reminderSound', 'Reminder sound', 'toggle'],
+             ['snoozeMinutes', 'Snooze (min)', 'number', 1, 30]]],
+  ['Quiet and night', [['quiet', 'Quiet mode', 'toggle'], ['night', 'Night mode', 'toggle'], ['nightMute', 'Mute at night', 'toggle'],
+                       ['nightStart', 'Night starts', 'time'], ['nightEnd', 'Night ends', 'time']]],
+  ['Presence', [['presence', 'Sense when you are at the desk', 'toggle'], ['presenceCm', 'Desk distance (cm)', 'number', 40, 250], ['awayMinutes', 'Blank after away (min)', 'number', 1, 60],
+                ['standMinutes', 'Stand-up nudge after (min, 0 off)', 'number', 0, 120], ['autoPauseFocus', 'Pause focus when away', 'toggle'], ['gestures', 'Hand gestures', 'toggle']]],
+  ['Knob', [['knobReverse', 'Reverse direction', 'toggle'], ['knobEdges', 'Edges per click', 'select', {4: '4 (most knobs)', 2: '2', 1: '1'}],
+            ['knobDoubleMs', 'Double-click', 'select', {170: 'Fast', 250: 'Normal', 350: 'Relaxed'}], ['knobAccel', 'Momentum', 'select', ['Off', 'Gentle', 'Fast']]]],
+  ['Weather and news', [['weather', 'Weather', 'toggle'], ['latitude', 'Latitude', 'decimal'], ['longitude', 'Longitude', 'decimal'], ['feed', 'News feed (RSS link)', 'text']]],
+  ['Connections', [['remote', 'Remote access at home', 'toggle'], ['relay', 'Away relay', 'toggle'], ['ideUploads', 'IDE uploads over Wi-Fi', 'toggle'],
+                   ['bluetooth', 'Bluetooth', 'toggle'], ['homeVolume', 'Home knob changes volume', 'toggle'], ['phoneRange', 'Phone nearby above −dBm', 'number', 40, 100],
+                   ['ha', 'Home Assistant', 'toggle'], ['haHost', 'HA broker host', 'text'], ['haPort', 'HA broker port', 'number', 1, 65535], ['haUser', 'HA user name', 'text'],
+                   ['haPass', 'HA password (blank keeps it)', 'password'], ['haTls', 'HA over TLS', 'toggle'], ['cloud', 'Arduino Cloud', 'toggle'], ['updateChecks', 'Check for updates', 'toggle']]],
+];
+function saveSetting(key, value, input) {
+  post('/settings', {[key]: value}, 'Saved').then(() => { if (prefs) prefs[key] = value; }).catch(() => { if (prefs && input) setInput(input, prefs[key]); });
+}
+function setInput(input, value) { if (input.type === 'checkbox') input.checked = !!value; else input.value = input.dataset.kind === 'time' ? hhmm(value) : value; }
+function renderSettings() {
+  if (!prefs) return;
+  const form = byId('settingsForm');
+  if (document.activeElement && form.contains(document.activeElement)) return;  // Don't redraw under the cursor.
+  form.replaceChildren();
+  SETTINGS.forEach(([title, fields]) => {
+    const card = el('div', {class: 'card'}, el('h2', {}, el('span', {text: title})));
+    fields.forEach(([key, label, kind, a, b]) => {
+      if (prefs[key] === undefined && kind !== 'password') return;
+      let input;
+      if (kind === 'toggle') {
+        input = el('input', {type: 'checkbox'});
+        card.append(el('div', {class: 'item'}, el('div', {class: 'main', text: label}), el('label', {class: 'switch'}, input, el('span'))));
+        input.onchange = () => saveSetting(key, input.checked, input);
+      } else if (kind === 'select') {
+        input = el('select');
+        const options = Array.isArray(a) ? a.map((t, v) => [v, t]) : Object.entries(a);
+        options.forEach(([v, t]) => input.append(el('option', {value: v, text: t})));
+        card.append(el('label', {}, label, input));
+        input.onchange = () => saveSetting(key, +input.value, input);
+      } else {
+        input = el('input', {type: kind === 'decimal' ? 'number' : kind === 'password' ? 'password' : kind, step: kind === 'decimal' ? 'any' : undefined, min: a, max: b, 'data-kind': kind});
+        card.append(el('label', {}, label, input));
+        input.onchange = () => {
+          const v = kind === 'number' || kind === 'decimal' ? +input.value : kind === 'time' ? readHHMM(input.value) : input.value;
+          if (kind === 'password' && !v) return;
+          saveSetting(key, v, input);
+          if (kind === 'password') input.value = '';
+        };
+      }
+      if (kind !== 'password') setInput(input, prefs[key]);
+    });
+    form.append(card);
+  });
+}
+
+// ---- Network, phone link, update, log ----
+function renderNetworks() {
+  if (!prefs) return;
+  const list = byId('networkList'); list.replaceChildren();
+  const names = [prefs.ssid, ...(prefs.networks || [])].filter(Boolean);
+  if (!names.length) list.append(el('p', {class: 'mute', text: 'No networks saved.'}));
+  names.forEach((name, n) => list.append(el('div', {class: 'item'}, el('div', {class: 'main'}, el('div', {text: name}), el('div', {class: 'sub', text: n === 0 ? (live && live.wifi === name ? 'Joined' : 'Current') : 'Saved'})),
+    el('button', {class: 'small ghost', text: 'Forget', on: {click: () => { if (confirm('Forget ' + name + '?')) post('/network/forget', {ssid: name}, 'Forgotten').then(loadSettings); }}}))));
+}
+byId('netAdd').onclick = () => post('/network', {ssid: byId('netSsid').value, password: byId('netPass').value, open: byId('netOpen').checked}, 'Saved: DeskMate is joining it').then(() => { byId('netPass').value = ''; loadSettings(); });
+function renderUpdate() {
+  byId('updateText').textContent = live.update ? 'DeskMate ' + live.update + ' is out (running ' + live.version + ').' : 'Running ' + live.version + '. DeskMate checks for signed releases every 12 hours.';
+  byId('updateInstall').classList.toggle('hidden', !live.update);
+  if (live.update) byId('updateInstall').textContent = 'Install ' + live.update;
+}
+async function showAwayLink() {
+  try {
+    const r = await fetch('/api/relay', {cache: 'no-store', headers: {'X-DeskMate-Token': token}});
+    if (!r.ok) return;
+    const relay = await r.json();
+    const p = new URLSearchParams({id: relay.id, key: relay.key});
+    if (relay.broker && relay.broker !== 'broker.hivemq.com') p.set('broker', relay.broker);
+    if (relay.user) p.set('user', relay.user);
+    if (relay.pass) p.set('pass', relay.pass);
+    const link = awayUrl + '#' + p;
+    drawQr(byId('qr'), link);
+    byId('copyAway').onclick = async () => { try { await navigator.clipboard.writeText(link); toast('Copied'); } catch (_) { prompt('Copy the away link', link); } };
+    byId('awayFile').href = '/away?token=' + encodeURIComponent(token);
+  } catch (_) {}
+}
+byId('upload').onclick = () => {
+  const file = byId('firmware').files[0];
+  if (!file) { byId('uploadResult').textContent = 'Choose a signed .bin first.'; return; }
+  const r = new XMLHttpRequest();
+  r.open('POST', '/api/ota');
+  r.setRequestHeader('X-DeskMate-Token', token); r.setRequestHeader('X-DeskMate-Config', '1'); r.setRequestHeader('Content-Type', 'application/octet-stream');
+  byId('uploadProgress').classList.remove('hidden'); byId('upload').disabled = true; byId('uploadResult').textContent = 'Uploading…';
+  r.upload.onprogress = e => { if (e.lengthComputable) byId('uploadProgress').value = 100 * e.loaded / e.total; };
+  r.onload = () => { byId('upload').disabled = false; byId('uploadResult').textContent = r.responseText || ('Upload failed (' + r.status + ').'); };
+  r.onerror = () => { byId('upload').disabled = false; byId('uploadResult').textContent = 'Upload interrupted. Try again.'; };
+  r.send(file);
+};
+byId('forget').onclick = async e => {
+  e.preventDefault();
+  if (away) { try { localStorage.removeItem('deskmateAway'); } catch (_) {} location.replace(location.pathname); return; }
+  try { await fetch('/api/unpair', {method: 'POST', headers: {'X-DeskMate-Token': token}}); } catch (_) {}
+  unpaired();
+};
+byId('pairButton').onclick = pair;
+
+// ======================= Start =======================
+async function boot() {
+  showOnly('app');
+  go(current);
+  if (away) {
+    config = relayConfig();
+    if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{64}$/.test(config.key)) { showOnly('missing'); setState('Not set up', 'down'); return; }
+    if (!window.crypto || !crypto.subtle) { setState('This browser cannot decrypt (needs a secure page)', 'down'); return; }
+    byId('forget').textContent = 'Forget DeskMate on this device';
+    setState('Connecting to the relay…', '');
+    await transport.away.start();
+  } else {
+    token = localStorage.getItem('deskmateToken') || '';
+    if (!token) { showOnly('pair'); setState('Not paired', 'down'); return; }
+    transport.home.start();
+  }
+  refresh();
+  // Away, or at home without the socket: ask every 3 s.
+  setInterval(() => { if (!document.hidden && (away || !socket || socket.readyState !== 1)) refresh(); }, 3000);
+  setInterval(() => { if (!document.hidden && live) tick(); }, 250);
+}
+boot();
 </script>
 </body>
 </html>
