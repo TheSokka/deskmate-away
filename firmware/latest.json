@@ -1,7 +1,7 @@
 {
-  "version": "1.9.1",
-  "size": 1814430,
-  "sha256": "315a0ccea7d197c84fc3a1c1414652991c62d27fbc8d5fec1d510a4a29627592",
-  "url": "DeskMateOS-1.9.1.bin",
-  "notes": "Hardware check: DeskMate checks its parts at start and while running. A part that stops working is reported once and its features switch off so everything else carries on; they come back when it works again. Gentler app loading while DeskMate starts."
+  "version": "1.9.2",
+  "size": 1839181,
+  "sha256": "446bb7c4f6c749e4c2e9dd56aaacd3539359563f92945e852be72881ecd0bf9f",
+  "url": "DeskMateOS-1.9.2.bin",
+  "notes": "A redesigned app: a sidebar and column layouts on desktop, a cleaner phone layout, settings search, keyboard shortcuts, timer progress bars, a checklist progress bar and smooth animations throughout."
 }

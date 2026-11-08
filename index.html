@@ -8,72 +8,194 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>DeskMate</title>
 <style>
-:root{color-scheme:light dark;--accent:#1f8a82;--accent2:#2fb3a8;--bg:#f4f6f6;--card:#fff;--ink:#14201f;--mute:#667;--line:#0001;--bad:#c0392b;--good:#2e9d5a}
-@media (prefers-color-scheme:dark){:root{--bg:#0d1416;--card:#162123;--ink:#e6efee;--mute:#90a3a1;--line:#fff1}}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,sans-serif}
-body{padding:0 0 calc(4.6rem + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-bottom:1px solid var(--line)}
-header h1{font-size:1.15rem;margin:0;flex:1}
-#state{font-size:.8rem;color:var(--mute);display:flex;align-items:center;gap:.35rem;text-align:right}
-.dot{width:.55rem;height:.55rem;border-radius:50%;background:#999;flex:none}.live .dot{background:var(--good)}.down .dot{background:var(--bad)}
-main{max-width:46rem;margin:0 auto;padding:.8rem}
+:root{color-scheme:light dark;
+--accent:#18877e;--accent-ink:#fff;--accent-soft:#18877e1f;--bg:#eef2f1;--bg2:#e6ecea;--card:#fff;--card2:#f6f8f8;--ink:#13201e;--mute:#5f6f6d;--line:#13201e14;
+--bad:#c4402f;--warn:#c98a12;--good:#2c9a58;--shadow:0 1px 2px #0d1a1810,0 6px 20px -8px #0d1a1826;--shadow-hi:0 2px 4px #0d1a1814,0 14px 34px -12px #0d1a1840;
+--r:1rem;--ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.3,1.35,.5,1);--nav:16rem}
+@media (prefers-color-scheme:dark){:root{--accent:#2fb0a4;--accent-ink:#04201d;--accent-soft:#2fb0a426;--bg:#0a1012;--bg2:#0e1618;--card:#121b1d;--card2:#172224;--ink:#e4eeec;--mute:#8fa3a0;--line:#ffffff12;
+--shadow:0 1px 2px #0006,0 8px 24px -10px #0008;--shadow-hi:0 2px 6px #0007,0 18px 40px -14px #000a}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(4.9rem + env(safe-area-inset-bottom));min-height:100vh}
+::selection{background:var(--accent-soft)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:.4rem}
+/* Header */
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;padding-top:calc(.75rem + env(safe-area-inset-top));
+  background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+header h1{font-size:1.1rem;margin:0;flex:1;display:flex;align-items:center;gap:.55rem;letter-spacing:-.01em;min-width:0}
+header h1 #tabTitle{display:none;font-weight:700}
+.logo{width:1.75rem;height:1.75rem;flex:none;border-radius:.5rem;background:linear-gradient(145deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#0b2a40));display:grid;place-items:center;box-shadow:0 2px 8px -2px var(--accent)}
+.logo svg{width:1.15rem;height:1.15rem}
+#state{font-size:.78rem;color:var(--mute);display:flex;align-items:center;gap:.45rem;padding:.3rem .65rem;border-radius:2rem;background:var(--card);box-shadow:var(--shadow);white-space:nowrap;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
+.dot{width:.5rem;height:.5rem;border-radius:50%;background:#999;flex:none;order:-1}
+.live .dot{background:var(--good);animation:pulse 2.4s var(--ease) infinite}.down .dot{background:var(--bad)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}70%,100%{box-shadow:0 0 0 .45rem transparent}}
+/* Layout */
+main{max-width:46rem;margin:0 auto;padding:.9rem .9rem 1rem}
 section.tab{display:none}section.tab.on{display:block}
-.card{background:var(--card);border-radius:.9rem;padding:.9rem 1rem;margin:0 0 .8rem;box-shadow:0 1px 2px #0002}
-h2{font-size:1rem;margin:.2rem 0 .7rem;display:flex;align-items:center;gap:.5rem}h2 span{flex:1}
-small,.mute{color:var(--mute)}small{display:block;font-size:.82rem}
-button,.btn{font:inherit;font-weight:650;border:0;border-radius:.6rem;padding:.6rem .9rem;background:var(--accent);color:#fff;cursor:pointer}
-[hidden]{display:none!important}button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}button.bad{background:var(--bad)}
-button:disabled{opacity:.45;cursor:default}button.small{padding:.35rem .65rem;font-size:.85rem}
-input,select{font:inherit;color:inherit;background:transparent;border:1px solid #8885;border-radius:.5rem;padding:.5rem .6rem;width:100%}
-input[type=checkbox]{width:auto}label{display:block;margin:.5rem 0}label>input,label>select{margin-top:.2rem}
+.card{background:var(--card);border-radius:var(--r);padding:1rem 1.1rem;margin:0 0 .9rem;box-shadow:var(--shadow);transition:box-shadow .25s var(--ease),transform .25s var(--ease)}
+h2{font-size:.95rem;margin:.1rem 0 .75rem;display:flex;align-items:center;gap:.5rem;letter-spacing:.01em}h2 span{flex:1}
+small,.mute{color:var(--mute)}small{display:block;font-size:.82rem;line-height:1.4}
+p{margin:.4rem 0 .7rem}
+a{color:var(--accent)}
+code{font-size:.85em;background:var(--card2);padding:.05rem .3rem;border-radius:.3rem}
+/* Controls */
+button,.btn{font:inherit;font-weight:650;border:0;border-radius:.7rem;padding:.62rem 1rem;background:var(--accent);color:var(--accent-ink);cursor:pointer;
+  transition:transform .14s var(--ease),background-color .2s,box-shadow .2s,opacity .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active:not(:disabled),.btn:active{transform:scale(.96)}
+[hidden]{display:none!important}
+button.ghost,.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent) 55%,transparent)}
+button.bad{background:var(--bad);color:#fff}
+button:disabled{opacity:.4;cursor:default}button.small{padding:.38rem .75rem;font-size:.84rem;border-radius:.6rem}
+@media (hover:hover){button:hover:not(:disabled){filter:brightness(1.08)}button.ghost:hover:not(:disabled){background:var(--accent-soft)}}
+input,select{font:inherit;color:inherit;background:var(--card2);border:1px solid var(--line);border-radius:.6rem;padding:.55rem .7rem;width:100%;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input[type=checkbox]{width:auto}label{display:block;margin:.55rem 0;font-size:.92rem}label>input,label>select{margin-top:.25rem}
 .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.row>*{flex:1 1 auto}.row>.fit{flex:0 0 auto}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-#screen{display:block;width:100%;max-width:520px;margin:0 auto .6rem;aspect-ratio:2;image-rendering:pixelated;background:#05070a;border-radius:.8rem;border:3px solid #222;outline:none}
-.knob{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;max-width:520px;margin:0 auto}.knob button{padding:.65rem .1rem;font-size:.9rem}
-.list>.item{display:flex;align-items:center;gap:.7rem;padding:.65rem 0;border-top:1px solid var(--line)}.list>.item:first-child{border-top:0}
-.item .main{flex:1;min-width:0}.item .big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
-.item .sub{font-size:.85rem;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.switch{position:relative;width:2.8rem;height:1.6rem;flex:none}.switch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:1}
-.switch span{position:absolute;inset:0;border-radius:1rem;background:#8886;transition:.2s}.switch span:after{content:'';position:absolute;left:.2rem;top:.2rem;width:1.2rem;height:1.2rem;border-radius:50%;background:#fff;transition:.2s}
-.switch input:checked+span{background:var(--accent)}.switch input:checked+span:after{left:1.4rem}
-.days{display:flex;gap:.25rem;flex-wrap:wrap}.days label{margin:0}.days input{display:none}.days span{display:inline-block;padding:.25rem .45rem;border-radius:.4rem;border:1px solid #8885;font-size:.8rem;cursor:pointer}
-.days input:checked+span{background:var(--accent);color:#fff;border-color:var(--accent)}
-.timer .big{font-size:2.2rem}.ring{width:9rem;height:9rem;margin:.2rem auto .6rem;display:block}
-.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0}.chip{font-size:.8rem;padding:.2rem .55rem;border-radius:1rem;background:#8882}
-.check{width:1.5rem;height:1.5rem;flex:none;accent-color:var(--accent)}
-nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;color:var(--mute);border-radius:0;padding:.55rem 0 .5rem;font-size:.7rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.1rem}
-nav button b{font-size:1.15rem;font-weight:400;line-height:1}nav button.on{color:var(--accent)}
-#toast{position:fixed;left:50%;bottom:5.4rem;transform:translateX(-50%);background:#222e;color:#fff;padding:.55rem .9rem;border-radius:.6rem;font-size:.9rem;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw}
-#toast.on{opacity:1}
-#log{white-space:pre-wrap;font-size:.78rem;max-height:20rem;overflow:auto;margin:0}
-.banner{background:var(--accent);color:#fff}.banner button{background:#fff;color:var(--accent)}
-details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
-#qr{background:#fff;border-radius:.4rem;max-width:280px;width:100%;image-rendering:pixelated}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+/* Live screen */
+.stage{padding:1rem}
+#screen{display:block;width:100%;max-width:560px;margin:0 auto .8rem;aspect-ratio:2;image-rendering:pixelated;background:#03060a;border-radius:.9rem;outline:none;
+  box-shadow:0 0 0 3px #1b2427,0 0 0 4px #0003,0 18px 36px -18px #000c,inset 0 0 18px #000;transition:box-shadow .3s var(--ease)}
+#screen.lit{animation:on .5s var(--ease)}@keyframes on{from{filter:brightness(2.2) blur(1px)}}
+#screen:focus-visible{box-shadow:0 0 0 3px var(--accent),0 18px 36px -18px #000c}
+.knob{display:grid;grid-template-columns:1fr 1.2fr 1.2fr 1.2fr 1fr;gap:.45rem;max-width:560px;margin:0 auto}
+.knob button{padding:.7rem .1rem;font-size:.9rem;background:var(--card2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.knob button[data-input=click]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.knob svg{width:1.15rem;height:1.15rem;vertical-align:-.2rem}
+.keys{text-align:center;font-size:.78rem;color:var(--mute);margin:.7rem 0 0}
+.keys kbd{font:600 .72rem ui-monospace,monospace;padding:.08rem .35rem;border-radius:.3rem;background:var(--card2);box-shadow:inset 0 -1px 0 var(--line),0 0 0 1px var(--line)}
+/* Lists */
+.list>.item{display:flex;align-items:center;gap:.75rem;padding:.7rem .2rem;border-top:1px solid var(--line);border-radius:.5rem;transition:background-color .2s}
+.list>.item:first-child{border-top:0}
+@media (hover:hover){.list>.item:hover{background:var(--card2)}}
+.item .main{flex:1;min-width:0}.item .big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.item .sub{font-size:.84rem;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.switch{position:relative;width:2.9rem;height:1.65rem;flex:none}.switch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:1rem;background:color-mix(in srgb,var(--mute) 35%,transparent);transition:background-color .25s}
+.switch span:after{content:'';position:absolute;left:.2rem;top:.2rem;width:1.25rem;height:1.25rem;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0004;transition:left .32s var(--spring)}
+.switch input:checked+span{background:var(--accent)}.switch input:checked+span:after{left:1.45rem}
+.switch input:focus-visible+span{box-shadow:0 0 0 3px var(--accent-soft)}
+.days{display:flex;gap:.3rem;flex-wrap:wrap;margin:.3rem 0}.days label{margin:0}.days input{display:none}
+.days span{display:inline-block;padding:.3rem .55rem;border-radius:.5rem;border:1px solid var(--line);background:var(--card2);font-size:.8rem;cursor:pointer;transition:background-color .2s,color .2s,transform .14s var(--ease)}
+.days span:active{transform:scale(.92)}.days input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.timer .big{font-size:2.2rem}.timer.running .big{color:var(--accent)}.timer.paused .big{opacity:.6}
+.bar{height:.3rem;border-radius:1rem;background:var(--card2);overflow:hidden;margin-top:.45rem;box-shadow:inset 0 0 0 1px var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#7fe3d8));border-radius:inherit;transition:width .3s linear}
+.timer.idle .bar{opacity:0}
+#deskChart rect{transform-box:fill-box;transform-origin:50% 100%;animation:grow .7s var(--ease) both}
+#healthChart polyline{stroke-dasharray:1200;animation:draw 1.2s var(--ease) both}
+@keyframes grow{from{transform:scaleY(0)}}@keyframes draw{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}
+#settingsForm .card>.item{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;font-size:.92rem}#settingsForm .card>.item .main{flex:1}
+#settingsForm .card>.item+label,#settingsForm .card>label+.item{border-top:1px solid var(--line)}
+.chip .key{display:inline-block;width:.6rem;height:.6rem;border-radius:.2rem;margin-right:.35rem;vertical-align:-.02rem}
+@media (hover:none){.keys{display:none}}
+.locked{padding:0 .2rem .55rem;font-size:.8rem;color:var(--mute)}
+#timerList details{padding:0 .2rem .55rem}#timerList details summary{font-size:.85rem}
+.ring{width:11rem;height:11rem;margin:.2rem auto .8rem;display:block}
+#focusArc{transition:stroke-dashoffset 1s linear}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.45rem 0}.chip{font-size:.78rem;padding:.22rem .6rem;border-radius:1rem;background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
+.check{appearance:none;-webkit-appearance:none;width:1.4rem;height:1.4rem;flex:none;margin:0;border-radius:.45rem;border:2px solid color-mix(in srgb,var(--mute) 60%,transparent);display:grid;place-items:center;cursor:pointer;transition:background-color .2s,border-color .2s,transform .14s var(--ease)}
+.check:active{transform:scale(.88)}.check:checked{background:var(--accent);border-color:var(--accent)}
+.check:checked::after{content:'';width:.34rem;height:.66rem;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:translate(0,-1px) rotate(45deg);animation:pop .32s var(--spring)}
+@keyframes pop{from{transform:translate(0,-1px) rotate(45deg) scale(.2);opacity:0}}
+#taskProgress{margin:-.2rem 0 .5rem}#taskProgress small{margin-top:.3rem}
+.glance>div{background:var(--card2);border-radius:.8rem;padding:.6rem .75rem;min-width:0}
+.glance small{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
+.glance .big{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Navigation: a bar at the bottom on phones, a sidebar on wide screens */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;padding:.3rem .3rem calc(.3rem + env(safe-area-inset-bottom));
+  background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-top:1px solid var(--line)}
+nav .navBrand,nav .navFoot{display:none}
+nav button{flex:1;background:none;color:var(--mute);border-radius:.8rem;padding:.3rem 0 .25rem;font-size:.68rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.15rem;min-width:0}
+nav button .ico{display:grid;place-items:center;width:3rem;height:1.75rem;border-radius:1rem;transition:background-color .25s var(--ease),transform .25s var(--spring)}
+nav button svg{width:1.25rem;height:1.25rem}
+nav button.on{color:var(--accent)}nav button.on .ico{background:var(--accent-soft);transform:translateY(-1px)}
+nav button kbd{display:none}
+nav button:active:not(:disabled){transform:scale(.94)}
+#toast{position:fixed;left:50%;bottom:calc(5.6rem + env(safe-area-inset-bottom));transform:translate(-50%,.8rem) scale(.96);background:color-mix(in srgb,#10191b 92%,transparent);color:#fff;
+  padding:.6rem 1rem;border-radius:.8rem;font-size:.9rem;font-weight:550;opacity:0;transition:opacity .25s var(--ease),transform .35s var(--spring);pointer-events:none;z-index:9;max-width:90vw;box-shadow:var(--shadow-hi)}
+#toast.on{opacity:1;transform:translate(-50%,0) scale(1)}
+#log{white-space:pre-wrap;font:.76rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:22rem;overflow:auto;margin:0;color:var(--mute)}
+.banner{background:var(--accent);color:var(--accent-ink)}.banner button{background:var(--card);color:var(--accent)}
+.alertCard{background:color-mix(in srgb,var(--bad) 13%,var(--card));box-shadow:inset 4px 0 0 var(--bad),var(--shadow);display:grid;gap:.6rem}.alertCard b{display:block;color:var(--bad);font-size:.95rem}.alertCard>div>div{color:var(--mute);font-size:.88rem;opacity:1!important}
+details summary{cursor:pointer;font-weight:600;margin:.35rem 0;color:var(--accent);list-style-position:inside}
+#qr,#ntfyQr{background:#fff;border-radius:.6rem;max-width:240px;width:100%;image-rendering:pixelated;padding:.4rem}
 .hidden{display:none!important}
+#pair,#missing{max-width:28rem;margin:12vh auto 0;text-align:center;padding:1.6rem}
+#pair .logo,#missing .logo{width:3.2rem;height:3.2rem;border-radius:.9rem;margin:0 auto .9rem}#pair .logo svg{width:2rem;height:2rem}
+.search{position:relative;margin:0 0 .9rem}.search input{padding-left:2.3rem;background:var(--card);box-shadow:var(--shadow);border-color:transparent}
+.search svg{position:absolute;left:.8rem;top:50%;width:1rem;height:1rem;transform:translateY(-50%);color:var(--mute)}
+#settingsEmpty{text-align:center;padding:2rem 0}
+/* Motion: each tab's cards rise in, one after another */
+@keyframes rise{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+section.tab.on>*,#settingsForm>.card{animation:rise .42s var(--ease) both}
+section.tab.on>:nth-child(2),#settingsForm>.card:nth-child(2){animation-delay:.04s}
+section.tab.on>:nth-child(3),#settingsForm>.card:nth-child(3){animation-delay:.08s}
+section.tab.on>:nth-child(4),#settingsForm>.card:nth-child(4){animation-delay:.12s}
+section.tab.on>:nth-child(5),#settingsForm>.card:nth-child(5){animation-delay:.16s}
+section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-delay:.2s}
+#settingsForm.quiet>.card{animation:none}
+.flash{animation:flash .9s var(--ease)}
+@keyframes flash{from{box-shadow:0 0 0 3px var(--accent),var(--shadow)}}
+/* Wide screens: a sidebar and room to breathe */
+@media (min-width:900px){
+  body{padding:0 0 0 var(--nav)}
+  header{padding:1rem 2rem;border-bottom-color:transparent}
+  header h1 .brandName{display:none}header h1 .logo{display:none}header h1 #tabTitle{display:block;font-size:1.45rem;letter-spacing:-.02em}
+  main{max-width:76rem;padding:.4rem 2rem 2.5rem}
+  nav{top:0;right:auto;width:var(--nav);flex-direction:column;justify-content:flex-start;gap:.15rem;padding:1.1rem .8rem;border-top:0;border-right:1px solid var(--line);background:var(--bg2)}
+  nav .navBrand{display:flex;align-items:center;gap:.65rem;padding:.2rem .55rem 1.3rem;font-weight:750;font-size:1.1rem;letter-spacing:-.01em}
+  nav .navFoot{display:block;margin-top:auto;padding:.6rem .6rem 0;font-size:.74rem;color:var(--mute);line-height:1.5}
+  nav button{flex:none;flex-direction:row;gap:.75rem;padding:.55rem .6rem;font-size:.93rem;color:var(--ink);text-align:left;opacity:.82}
+  nav button .ico{width:2rem;height:2rem;border-radius:.6rem}
+  nav button span.label{flex:1}
+  nav button kbd{display:inline-block;font:600 .68rem ui-monospace,monospace;color:var(--mute);padding:.05rem .32rem;border-radius:.3rem;box-shadow:inset 0 0 0 1px var(--line);opacity:0;transition:opacity .2s}
+  nav:hover button kbd{opacity:1}
+  nav button.on{opacity:1;background:var(--card);box-shadow:var(--shadow);color:var(--ink)}nav button.on .ico{background:var(--accent);color:var(--accent-ink);transform:none}
+  @media (hover:hover){nav button:hover:not(.on){background:color-mix(in srgb,var(--card) 60%,transparent);opacity:1}}
+  #toast{bottom:2rem;left:calc(50% + var(--nav) / 2)}
+  .card{padding:1.2rem 1.35rem;margin-bottom:1.1rem}
+  @media (hover:hover){.card:hover{box-shadow:var(--shadow-hi)}}
+  /* Home: the live screen on the left, everything at a glance on the right */
+  section.tab[data-tab=home].on{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 1.3rem;align-items:start}
+  section.tab[data-tab=home]>.wide{grid-column:1/-1}
+  section.tab[data-tab=home] .stage{position:sticky;top:5rem;padding:1.4rem}
+  /* Most tabs: cards in balanced columns */
+  section.tab[data-tab=timers].on,section.tab[data-tab=tasks].on,section.tab[data-tab=more].on,#settingsForm{columns:2 22rem;column-gap:1.3rem}
+  section.tab.on>.card,#settingsForm>.card{break-inside:avoid}
+  section.tab[data-tab=settings] .search{max-width:30rem}
+  section.tab[data-tab=alarms].on{max-width:46rem}
+  section.tab[data-tab=focus].on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:0 1.3rem;align-items:start}
+  section.tab[data-tab=focus]>.card:nth-child(3){grid-column:2;grid-row:1/span 2}
+  .item .big{font-size:1.65rem}
+}
+@media (min-width:1400px){#settingsForm,section.tab[data-tab=more].on{columns:3 20rem}}
+@media (min-width:900px){body.bare{padding-left:0}body.bare header h1 .logo,body.bare header h1 .brandName{display:flex}body.bare header h1 #tabTitle{display:none}body.bare header{border-bottom-color:var(--line)}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<header><h1>DeskMate</h1><div id="state"><span id="stateText">Starting…</span><span class="dot"></span></div></header>
+<header><h1><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="11" rx="3"/><circle cx="9.5" cy="11.5" r="1.2" fill="#fff"/><circle cx="14.5" cy="11.5" r="1.2" fill="#fff"/><path d="M9 20h6"/></svg></span><span class="brandName">DeskMate</span><span id="tabTitle">Home</span></h1><div id="state"><span id="stateText">Starting…</span><span class="dot"></span></div></header>
 <main>
-<div id="pair" class="card hidden"><h2>Pair this browser</h2>
+<div id="pair" class="card hidden"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="11" rx="3"/><circle cx="9.5" cy="11.5" r="1.2" fill="#fff"/><circle cx="14.5" cy="11.5" r="1.2" fill="#fff"/><path d="M9 20h6"/></svg></span><h2 style="justify-content:center">Pair this browser</h2>
 <p>DeskMate asks you to confirm on its screen: click the knob once to allow this browser. Paired browsers can see and change everything on DeskMate.</p>
 <button id="pairButton">Pair this browser</button><p id="pairStatus" class="mute"></p></div>
-<div id="missing" class="card hidden"><h2>This page is not set up</h2>
+<div id="missing" class="card hidden"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="11" rx="3"/><circle cx="9.5" cy="11.5" r="1.2" fill="#fff"/><circle cx="14.5" cy="11.5" r="1.2" fill="#fff"/><path d="M9 20h6"/></svg></span><h2 style="justify-content:center">This page is not set up</h2>
 <p>At home, open <b>http://deskmate.local</b>, pair the browser, and scan the QR code under <b>More → Phone and away</b> with this phone.</p></div>
 
 <section class="tab" data-tab="home">
-<div id="hardwareBanner" class="card hidden" style="background:var(--bad);color:#fff"></div>
-<div id="releaseBanner" class="card banner hidden"><div class="row"><span id="releaseText"></span><button class="fit small" id="releaseInstall">Install</button></div></div>
-<canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
+<div id="hardwareBanner" class="card alertCard wide hidden" role="alert"></div>
+<div id="releaseBanner" class="card banner wide hidden"><div class="row"><span id="releaseText"></span><button class="fit small" id="releaseInstall">Install</button></div></div>
+<div class="card stage"><canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
 <div class="knob">
-<button data-input="left" title="Turn left (←)">⟲</button><button data-input="click" title="Click (Enter)">Click</button>
+<button data-input="left" title="Turn left (←)" aria-label="Turn left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v4h4"/></svg></button><button data-input="click" title="Click (Enter)">Click</button>
 <button data-input="double" title="Double-click (Space)">Double</button><button data-input="hold" title="Hold (Esc)">Hold</button>
-<button data-input="right" title="Turn right (→)">⟳</button></div>
-<p class="mute" style="text-align:center;font-size:.8rem">← → turn · Enter click · Space double · Esc hold · wheel over the screen turns</p>
-<div class="card"><div class="grid2" id="glance"></div></div>
+<button data-input="right" title="Turn right (→)" aria-label="Turn right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button></div>
+<p class="keys"><kbd>←</kbd> <kbd>→</kbd> turn · <kbd>Enter</kbd> click · <kbd>Space</kbd> double · <kbd>Esc</kbd> hold · scroll over the screen to turn</p></div>
+<div class="side"><div class="card"><div class="grid2 glance" id="glance"></div></div>
 <div class="card"><h2><span>Agenda</span><button class="small ghost" id="calRefresh">Refresh</button></h2><div class="list" id="agendaList"></div><small id="agendaStatus" class="mute"></small></div>
-<div class="card hidden" id="worldCard"><h2><span>World clocks</span></h2><div class="grid2" id="worldList"></div></div>
+<div class="card hidden" id="worldCard"><h2><span>World clocks</span></h2><div class="grid2 glance" id="worldList"></div></div></div>
 </section>
 
 <section class="tab" data-tab="alarms">
@@ -102,11 +224,12 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 </section>
 
 <section class="tab" data-tab="tasks">
-<div class="card"><h2><span>Today</span><button class="small" id="addTask">＋ New</button></h2><div class="list" id="taskList"></div></div>
+<div class="card"><h2><span>Today</span><button class="small" id="addTask">＋ New</button></h2><div id="taskProgress" class="hidden"><div class="bar"><i id="taskBar"></i></div><small id="taskCount"></small></div><div class="list" id="taskList"></div></div>
 <div class="card"><h2><span>Countdowns</span><button class="small" id="addEvent">＋ New</button></h2><div class="list" id="eventList"></div></div>
 </section>
 
-<section class="tab" data-tab="settings"><div id="settingsForm"></div></section>
+<section class="tab" data-tab="settings"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+<input id="settingsSearch" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off"></div><div id="settingsForm"></div><p id="settingsEmpty" class="mute hidden">No setting matches that.</p></section>
 
 <section class="tab" data-tab="more">
 <div class="card"><h2><span>Wi-Fi networks</span></h2><div class="list" id="networkList"></div>
@@ -124,7 +247,8 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <div class="row"><button id="ntfyTest" class="ghost">Send a test</button></div><small id="ntfyStatus" class="mute"></small></div>
 <div class="card"><h2><span>Hardware check</span><button class="small ghost" id="hwCheck">Check again</button></h2><div class="list" id="hardwareList"></div>
 <small class="mute">DeskMate checks its parts when it starts and keeps watching them. A part that stops working is switched off so everything else carries on, and comes back by itself when it works again.</small></div>
-<div class="card"><h2><span>Health, last 7 days</span></h2><svg id="healthChart" viewBox="0 0 280 130" style="width:100%"></svg><small id="healthNote" class="mute"></small></div>
+<div class="card"><h2><span>Health, last 7 days</span></h2><svg id="healthChart" viewBox="0 0 280 130" style="width:100%"></svg>
+<div class="chips"><span class="chip"><i class="key" style="background:var(--accent)"></i>Free memory, lowest each hour (top, to 64 KB)</span><span class="chip"><i class="key" style="background:var(--bad)"></i>Slowest loop pass (bottom, to 200 ms)</span></div><small id="healthNote" class="mute"></small></div>
 <div class="card"><h2><span>Software update</span></h2><p id="updateText" class="mute">Checking…</p>
 <div class="row"><button id="updateCheck" class="ghost">Check now</button><button id="updateInstall" class="hidden">Install</button></div>
 <details class="home-only"><summary>Upload a signed build instead</summary><input id="firmware" type="file" accept=".bin,application/octet-stream">
@@ -134,10 +258,9 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <div class="card"><small id="transportNote"></small><p><a href="#" id="forget">Unpair this browser</a></p></div>
 </section>
 </main>
-<nav id="tabs">
-<button data-go="home" class="on"><b>◉</b>Home</button><button data-go="alarms"><b>⏰</b>Alarms</button>
-<button data-go="timers"><b>⏱</b>Timers</button><button data-go="focus"><b>◎</b>Focus</button>
-<button data-go="tasks"><b>✓</b>Tasks</button><button data-go="settings"><b>⚙</b>Settings</button><button data-go="more"><b>⋯</b>More</button></nav>
+<nav id="tabs"><div class="navBrand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="6" width="17" height="11" rx="3"/><circle cx="9.5" cy="11.5" r="1.2" fill="#fff"/><circle cx="14.5" cy="11.5" r="1.2" fill="#fff"/><path d="M9 20h6"/></svg></span>DeskMate</div>
+<button data-go="home" class="on"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2.5"/><path d="M9 21h6M12 17v4"/></svg></span><span class="label">Home</span><kbd>1</kbd></button><button data-go="alarms"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 2M5 4 3 6M19 4l2 2"/></svg></span><span class="label">Alarms</span><kbd>2</kbd></button><button data-go="timers"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7"/><path d="M12 14v-3.5M10 3h4M18.5 7.5 20 6"/></svg></span><span class="label">Timers</span><kbd>3</kbd></button><button data-go="focus"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span><span class="label">Focus</span><kbd>4</kbd></button><button data-go="tasks"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></span><span class="label">Tasks</span><kbd>5</kbd></button><button data-go="settings"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span class="label">Settings</span><kbd>6</kbd></button><button data-go="more"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18" cy="12" r="1.3" fill="currentColor"/></svg></span><span class="label">More</span><kbd>7</kbd></button>
+<div class="navFoot">Keys <b>1</b>–<b>7</b> switch pages.<br>On Home, the arrow keys turn the knob.</div></nav>
 <div id="toast" role="status"></div>
 <script>
 'use strict';
@@ -530,7 +653,14 @@ function drawFrame(bytes) {
     pixels.data.set(on ? [150, 230, 255, 255] : [8, 10, 14, 255], (y * 128 + x) * 4);
   }
   screen.putImageData(pixels, 0, 0);
+  byId('screen').classList.add('lit');
 }
+// Until the first frame: a quiet note in DeskMate's own colours, not a black box.
+(() => {
+  screen.fillStyle = '#080a0e'; screen.fillRect(0, 0, 128, 64);
+  screen.fillStyle = '#96e6ff55'; screen.font = '7px ui-monospace,monospace'; screen.textAlign = 'center';
+  screen.fillText('Waiting for the screen…', 64, 35);
+})();
 document.querySelectorAll('[data-input]').forEach(b => b.addEventListener('click', () => T().input(b.dataset.input)));
 const KEYS = {ArrowLeft: 'left', ArrowUp: 'left', ArrowRight: 'right', ArrowDown: 'right', Enter: 'click', ' ': 'double', Escape: 'hold', Backspace: 'hold'};
 document.addEventListener('keydown', e => {
@@ -548,10 +678,18 @@ function showOnly(which) {
   byId('missing').classList.toggle('hidden', which !== 'missing');
   document.querySelector('main').querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', which === 'app' && s.dataset.tab === current));
   byId('tabs').classList.toggle('hidden', which !== 'app');
+  document.body.classList.toggle('bare', which !== 'app');
 }
+const TAB_NAMES = {home: 'Home', alarms: 'Alarms', timers: 'Timers & stopwatch', focus: 'Focus', tasks: 'Tasks & countdowns', settings: 'Settings', more: 'More'};
+let settingsShown = false;  // The settings cards rise in once per visit, not on every refresh.
 function go(tab) {
+  if (tab !== current) window.scrollTo({top: 0});
   current = tab;
+  byId('tabTitle').textContent = TAB_NAMES[tab] || '';
+  document.title = tab === 'home' ? 'DeskMate' : (TAB_NAMES[tab] || '') + ' · DeskMate';
+  if (tab === 'settings') { settingsShown = false; byId('settingsForm').classList.remove('quiet'); }
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === tab));
+  if (document.body.classList.contains('bare')) return;  // Not paired yet: nothing to show.
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
   if (tab === 'settings' || tab === 'more') loadSettings();
   if (tab === 'more') { loadLog(); loadHistory(); loadHardware(); }
@@ -560,6 +698,13 @@ function go(tab) {
   render();
 }
 document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+// 1-7 switch pages (not while typing); / jumps to the settings search.
+document.addEventListener('keydown', e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey || byId('tabs').classList.contains('hidden')) return;
+  const tabs = Object.keys(TAB_NAMES), n = Number(e.key);
+  if (n >= 1 && n <= tabs.length) { e.preventDefault(); go(tabs[n - 1]); }
+  else if (e.key === '/') { e.preventDefault(); go('settings'); byId('settingsSearch').focus(); }
+});
 
 // The live state arrives once a second (over the socket at home); the lists are fetched
 // again only when DeskMate says they changed. One request at a time keeps DeskMate's
@@ -708,7 +853,6 @@ function renderHealth() {
     points: hours.map(r => x(r[0]).toFixed(1) + ',' + (base - Math.min(1, pick(r) / scale) * 50).toFixed(1)).join(' ')}));
   [[58, 'Free memory, lowest each hour (to 64 KB)'], [118, 'Slowest loop pass each hour (to 200 ms)']].forEach(([y, t]) => {
     chart.append(svg('line', {x1: 0, x2: 280, y1: y, y2: y, stroke: '#8884'}));
-    const label = svg('text', {x: 2, y: y - 44, 'font-size': 7, fill: 'currentColor', opacity: .6}); label.textContent = t; chart.append(label);
   });
   line(r => r[1], 64, 58, 'var(--accent)');
   line(r => r[2], 200, 118, 'var(--bad)');
@@ -747,7 +891,12 @@ function tick() {
   if (current === 'home') renderHome();
   if (current === 'focus') renderFocus();
   if (current === 'timers') {
-    live.timers.forEach((t, i) => { const e = byId('tt' + i); if (e && t.phase === 'running') e.textContent = clock(Math.max(0, t.remainingMs - since())); });
+    live.timers.forEach((t, i) => {
+      if (t.phase !== 'running') return;
+      const left = Math.max(0, t.remainingMs - since()), e = byId('tt' + i), b = byId('tb' + i);
+      if (e) e.textContent = clock(left);
+      if (b && t.preset) b.style.width = ((1 - left / (t.preset * 1000)) * 100).toFixed(2) + '%';
+    });
     const w = live.stopwatch; byId('watchTime').textContent = clock(w.elapsedMs + (w.running ? since() : 0), true);
   }
 }
@@ -790,10 +939,15 @@ function renderTimers() {
     const controls = el('div', {class: 'row fit'},
       el('button', {class: 'small', text: t.phase === 'running' ? 'Pause' : 'Start', on: {click: () => post('/timer', {i, action: t.phase === 'running' ? 'pause' : 'start'})}}),
       el('button', {class: 'small ghost', text: 'Reset', disabled: t.phase === 'idle', on: {click: () => post('/timer', {i, action: 'reset'}, 'Timer reset')}}));
-    const item = el('div', {class: 'item timer'}, el('div', {class: 'main'}, el('div', {class: 'big', id: 'tt' + i, text: clock(left)}),
-      el('div', {class: 'sub', text: 'Timer ' + (i + 1) + ' · ' + t.phase + (t.phase === 'idle' ? '' : ' · set ' + clock(t.preset * 1000))})), controls);
+    const done = t.preset ? 1 - left / (t.preset * 1000) : 0;
+    const item = el('div', {class: 'item timer ' + t.phase}, el('div', {class: 'main'}, el('div', {class: 'big', id: 'tt' + i, text: clock(left)}),
+      el('div', {class: 'sub', text: 'Timer ' + (i + 1) + ' · ' + t.phase + (t.phase === 'idle' ? '' : ' · set ' + clock(t.preset * 1000))}),
+      el('div', {class: 'bar'}, el('i', {id: 'tb' + i, style: 'width:' + (t.phase === 'idle' ? 0 : (done * 100).toFixed(2)) + '%'}))), controls);
     list.append(item);
-    if (t.phase === 'idle') {
+    if (t.phase !== 'idle') {
+      // Kept in place while it runs, so nothing jumps; changing waits for a reset.
+      list.append(el('div', {class: 'sub locked', text: 'Reset Timer ' + (i + 1) + ' to change its length'}));
+    } else {
       const h = el('input', {type: 'number', min: 0, max: 23, value: Math.floor(t.preset / 3600)});
       const m = el('input', {type: 'number', min: 0, max: 59, value: Math.floor(t.preset / 60) % 60});
       const s = el('input', {type: 'number', min: 0, max: 59, value: t.preset % 60});
@@ -834,6 +988,10 @@ byId('focusSave').onclick = () => post('/focus', {work: +byId('fWork').value, sh
 let editingTask = -1, editingEvent = -1;
 function renderTasks() {
   const list = byId('taskList'); list.replaceChildren();
+  const named = data.tasks.filter(t => t.label), doneCount = named.filter(t => t.done).length;
+  byId('taskProgress').classList.toggle('hidden', !named.length);
+  byId('taskBar').style.width = (named.length ? 100 * doneCount / named.length : 0) + '%';
+  byId('taskCount').textContent = doneCount === named.length && named.length ? 'All done for today' : doneCount + ' of ' + named.length + ' done today';
   const used = data.tasks.map((t, i) => ({t, i})).filter(({t, i}) => t.label || i === editingTask);
   if (!used.length) list.append(el('p', {class: 'mute', text: 'No tasks yet. Add one with ＋ New.'}));
   used.forEach(({t, i}) => {
@@ -909,6 +1067,8 @@ function renderSettings() {
   const form = byId('settingsForm');
   if (document.activeElement && form.contains(document.activeElement)) return;  // Don't redraw under the cursor.
   form.replaceChildren();
+  form.classList.toggle('quiet', settingsShown);
+  settingsShown = true;
   SETTINGS.forEach(([title, fields]) => {
     const card = el('div', {class: 'card'}, el('h2', {}, el('span', {text: title})));
     fields.forEach(([key, label, kind, a, b]) => {
@@ -956,7 +1116,27 @@ function renderSettings() {
     });
     form.append(card);
   });
+  filterSettings();
 }
+// Search: keeps the cards (and, within them, the rows) that match.
+function filterSettings() {
+  const q = byId('settingsSearch').value.trim().toLowerCase();
+  let shown = 0;
+  byId('settingsForm').querySelectorAll(':scope>.card').forEach(card => {
+    const titleHit = card.querySelector('h2').textContent.toLowerCase().includes(q);
+    let rows = 0;
+    card.querySelectorAll(':scope>label,:scope>.item').forEach(row => {
+      const hit = !q || titleHit || row.textContent.toLowerCase().includes(q);
+      row.style.display = hit ? '' : 'none';
+      rows += hit;
+    });
+    const show = !q || titleHit || rows > 0;
+    card.style.display = show ? '' : 'none';
+    shown += show;
+  });
+  byId('settingsEmpty').classList.toggle('hidden', shown > 0);
+}
+byId('settingsSearch').addEventListener('input', () => { byId('settingsForm').classList.add('quiet'); filterSettings(); });
 
 // ---- Network, phone link, update, log ----
 function renderNetworks() {
