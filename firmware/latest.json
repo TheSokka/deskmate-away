@@ -1,7 +1,7 @@
 {
-  "version": "1.10.2",
-  "size": 1844300,
-  "sha256": "be6d3c5159811bcf68eb967995cdbb66b53a2ad408d0c9cfcdaa75171c537438",
-  "url": "DeskMateOS-1.10.2.bin",
-  "notes": "Larger Classic clock, quieter Settings, and a more readable Weather Now."
+  "version": "1.12.1",
+  "size": 1891916,
+  "sha256": "b21e966ac2803aa80d6ae9c007647ddb66a4030902a9be21e8051c646fb2722c",
+  "url": "DeskMateOS-1.12.1.bin",
+  "notes": "Hosted live voice, a longer wait for startup networking, and steadier speaker scheduling."
 }
