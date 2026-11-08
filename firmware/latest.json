@@ -1,7 +1,7 @@
 {
-  "version": "1.9.2",
-  "size": 1839181,
-  "sha256": "446bb7c4f6c749e4c2e9dd56aaacd3539359563f92945e852be72881ecd0bf9f",
-  "url": "DeskMateOS-1.9.2.bin",
-  "notes": "A redesigned app: a sidebar and column layouts on desktop, a cleaner phone layout, settings search, keyboard shortcuts, timer progress bars, a checklist progress bar and smooth animations throughout."
+  "version": "1.10.0",
+  "size": 1842157,
+  "sha256": "61196cf1ddd00f5d783ff7208b2a4da9b3508629a35fe7c4541165ce1472d639",
+  "url": "DeskMateOS-1.10.0.bin",
+  "notes": "New horizontal app launcher. Turn one detent per app, click the centered icon to open it, and hold to return. App submenus keep vertical scrolling."
 }
