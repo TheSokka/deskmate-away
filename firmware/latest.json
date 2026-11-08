@@ -1,7 +1,7 @@
 {
-  "version": "1.9.0",
-  "size": 1806717,
-  "sha256": "016af9f3cb0b7613d24526b8466df2960c958d7c2c670299777baa47b98e16ff",
-  "url": "DeskMateOS-1.9.0.bin",
-  "notes": "Calendar agenda, alerts on your phone (ntfy), desk stats and wellness reminders, world clocks and an hourly health history. Fixes: weather, news and update downloads no longer stall after the first update check; much more free memory."
+  "version": "1.9.1",
+  "size": 1814430,
+  "sha256": "315a0ccea7d197c84fc3a1c1414652991c62d27fbc8d5fec1d510a4a29627592",
+  "url": "DeskMateOS-1.9.1.bin",
+  "notes": "Hardware check: DeskMate checks its parts at start and while running. A part that stops working is reported once and its features switch off so everything else carries on; they come back when it works again. Gentler app loading while DeskMate starts."
 }

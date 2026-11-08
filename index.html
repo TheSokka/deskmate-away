@@ -63,6 +63,7 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <p>At home, open <b>http://deskmate.local</b>, pair the browser, and scan the QR code under <b>More → Phone and away</b> with this phone.</p></div>
 
 <section class="tab" data-tab="home">
+<div id="hardwareBanner" class="card hidden" style="background:var(--bad);color:#fff"></div>
 <div id="releaseBanner" class="card banner hidden"><div class="row"><span id="releaseText"></span><button class="fit small" id="releaseInstall">Install</button></div></div>
 <canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
 <div class="knob">
@@ -121,6 +122,8 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
 <canvas id="ntfyQr" width="0" height="0" aria-label="QR code with the ntfy subscription link"></canvas>
 <p><a id="ntfyLink" href="#" target="_blank" rel="noopener"></a></p>
 <div class="row"><button id="ntfyTest" class="ghost">Send a test</button></div><small id="ntfyStatus" class="mute"></small></div>
+<div class="card"><h2><span>Hardware check</span><button class="small ghost" id="hwCheck">Check again</button></h2><div class="list" id="hardwareList"></div>
+<small class="mute">DeskMate checks its parts when it starts and keeps watching them. A part that stops working is switched off so everything else carries on, and comes back by itself when it works again.</small></div>
 <div class="card"><h2><span>Health, last 7 days</span></h2><svg id="healthChart" viewBox="0 0 280 130" style="width:100%"></svg><small id="healthNote" class="mute"></small></div>
 <div class="card"><h2><span>Software update</span></h2><p id="updateText" class="mute">Checking…</p>
 <div class="row"><button id="updateCheck" class="ghost">Check now</button><button id="updateInstall" class="hidden">Install</button></div>
@@ -551,7 +554,7 @@ function go(tab) {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.go === tab));
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
   if (tab === 'settings' || tab === 'more') loadSettings();
-  if (tab === 'more') { loadLog(); loadHistory(); }
+  if (tab === 'more') { loadLog(); loadHistory(); loadHardware(); }
   if (tab === 'home') { loadAgenda(); if (!prefs) loadSettings(); }
   if (tab === 'focus') loadHistory();
   render();
@@ -594,6 +597,7 @@ const since = () => live ? Date.now() - stateAt : 0;
 const busy = id => { const box = byId(id); return box.contains(document.activeElement) || !!box.querySelector('details[open]'); };
 function render() {
   if (!live || !data) return;
+  renderHardwareBanner();
   if (current === 'home') renderHome();
   if (current === 'alarms' && editingAlarm < 0 && !busy('alarmList')) renderAlarms();
   if (current === 'timers' && !busy('timerList')) renderTimers();
@@ -622,6 +626,23 @@ function renderHome() {
   if (live.streak) add('Focus streak', live.streak + (live.streak === 1 ? ' day' : ' days'));
   renderWorld();
 }
+// ---- 1.9.1: hardware check ----
+function renderHardwareBanner() {
+  const problems = (live && live.hardware) || [], banner = byId('hardwareBanner');
+  banner.classList.toggle('hidden', !problems.length);
+  banner.replaceChildren(...problems.map(p => el('div', {}, el('b', {text: p.name + (p.state === 'failed' ? ' not working' : ' acting up')}),
+    el('div', {style: 'opacity:.85;font-size:.9rem', text: p.detail + (p.effect ? ' · ' + p.effect : '')}))));
+}
+async function loadHardware() {
+  try {
+    const hw = await api('GET', '/hardware');
+    const icons = {ok: '✓', failed: '✕', warning: '!', checking: '…', off: '–', 'not testable': '·'};
+    byId('hardwareList').replaceChildren(...hw.modules.map(m => el('div', {class: 'item'},
+      el('div', {style: 'width:1.4rem;text-align:center;font-weight:700;color:' + (m.state === 'failed' ? 'var(--bad)' : m.state === 'warning' ? '#d4a017' : m.state === 'ok' ? 'var(--good)' : 'var(--mute)'), text: icons[m.state] || '?'}),
+      el('div', {class: 'main'}, el('div', {text: m.name}), el('div', {class: 'sub', text: m.state === 'ok' ? 'Working' : [m.detail || m.state, m.effect].filter(Boolean).join(' · ')})))));
+  } catch (_) {}
+}
+byId('hwCheck').onclick = () => post('/hardware/check', {}, 'Checking again').then(() => setTimeout(loadHardware, 4000));
 // ---- 1.9: agenda, world clocks, desk history, phone alerts and health ----
 const timeAt = unix => { const d = new Date(unix * 1000); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
 function renderAgenda() {
@@ -722,6 +743,7 @@ function nextAlarm() {
 
 // Every 250 ms: only the numbers that count, so nothing under the cursor is rebuilt.
 function tick() {
+  renderHardwareBanner();
   if (current === 'home') renderHome();
   if (current === 'focus') renderFocus();
   if (current === 'timers') {
