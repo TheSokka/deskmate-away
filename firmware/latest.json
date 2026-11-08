@@ -1,7 +1,7 @@
 {
-  "version": "1.10.0",
-  "size": 1842157,
-  "sha256": "61196cf1ddd00f5d783ff7208b2a4da9b3508629a35fe7c4541165ce1472d639",
-  "url": "DeskMateOS-1.10.0.bin",
-  "notes": "New horizontal app launcher. Turn one detent per app, click the centered icon to open it, and hold to return. App submenus keep vertical scrolling."
+  "version": "1.10.1",
+  "size": 1843452,
+  "sha256": "eb4ebf9c8496e12c63ba0a0259a381cf8ade3fb790c1dd49c91a371b16477432",
+  "url": "DeskMateOS-1.10.1.bin",
+  "notes": "Redrawn app icons, more room for the launcher artwork, and a cleaner clock face without the persistent wordmark."
 }
