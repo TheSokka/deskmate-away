@@ -193,7 +193,10 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <button data-input="double" title="Double-click (Space)">Double</button><button data-input="hold" title="Hold (Esc)">Hold</button>
 <button data-input="right" title="Turn right (→)" aria-label="Turn right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button></div>
 <p class="keys"><kbd>←</kbd> <kbd>→</kbd> turn · <kbd>Enter</kbd> click · <kbd>Space</kbd> double · <kbd>Esc</kbd> hold · scroll over the screen to turn</p></div>
-<div class="side"><div class="card"><div class="grid2 glance" id="glance"></div></div>
+<div class="side"><div class="card" id="askCard"><h2><span>Ask DeskMate</span><span class="chip hidden" id="askStatus" style="flex:none"></span></h2>
+<form id="askForm" class="row"><input id="askText" maxlength="199" placeholder="Set a 10 minute timer…" autocomplete="off" aria-label="Ask DeskMate"><button class="fit">Ask</button></form>
+<p id="askReply" class="sub hidden" style="margin:.7rem 0 0" aria-live="polite"></p></div>
+<div class="card"><div class="grid2 glance" id="glance"></div></div>
 <div class="card"><h2><span>Agenda</span><button class="small ghost" id="calRefresh">Refresh</button></h2><div class="list" id="agendaList"></div><small id="agendaStatus" class="mute"></small></div>
 <div class="card hidden" id="worldCard"><h2><span>World clocks</span></h2><div class="grid2 glance" id="worldList"></div></div></div>
 </section>
@@ -232,6 +235,15 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <input id="settingsSearch" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off"></div><div id="settingsForm"></div><p id="settingsEmpty" class="mute hidden">No setting matches that.</p></section>
 
 <section class="tab" data-tab="more">
+<div class="card" id="soundsCard"><h2><span>Sounds</span></h2>
+<label>Theme<select id="sndTheme"></select></label>
+<label>Sounds volume <b id="sndVolText"></b><input id="sndVol" type="range" min="0" max="10" step="1"></label>
+<label>Voice volume <b id="voiceVolText"></b><input id="voiceVol" type="range" min="0" max="10" step="1"></label>
+<label><input id="sndChirps" type="checkbox"> Companion chirps</label>
+<details><summary>Ring tones</summary><div class="list" id="toneList"></div></details>
+<details><summary>My sounds</summary><div class="list" id="mySoundList"></div>
+<small class="mute" id="mySoundHint">Any audio file. DeskMate keeps up to 15 s of it, converted here in your browser. Upload at home.</small></details>
+</div>
 <div class="card"><h2><span>Wi-Fi networks</span></h2><div class="list" id="networkList"></div>
 <details><summary>Add a network</summary><label>Name<input id="netSsid" maxlength="32" autocomplete="off"></label>
 <label>Password<input id="netPass" type="password" maxlength="63" autocomplete="new-password"></label>
@@ -748,7 +760,7 @@ function render() {
   if (current === 'timers' && !busy('timerList')) renderTimers();
   if (current === 'focus') renderFocus();
   if (current === 'tasks') { if (editingTask < 0 && !busy('taskList')) renderTasks(); if (editingEvent < 0 && !busy('eventList')) renderEvents(); }
-  if (current === 'more') renderUpdate();
+  if (current === 'more') { renderUpdate(); if (!soundsInfo && !soundsLoading) loadSounds(); }
   const banner = byId('releaseBanner');
   banner.classList.toggle('hidden', !live.update);
   if (live.update) byId('releaseText').textContent = 'DeskMate ' + live.update + ' is out.';
@@ -756,11 +768,33 @@ function render() {
 byId('releaseInstall').onclick = byId('updateInstall').onclick = () => post('/update/install', {}, 'Downloading the update…');
 byId('updateCheck').onclick = () => post('/update/check', {}, 'Checking…');
 
+// The assistant (1.13): type a question; DeskMate answers aloud, and its words show here too.
+byId('askForm').onsubmit = e => {
+  e.preventDefault();
+  const text = byId('askText').value.trim();
+  if (!text) return;
+  post('/ask', {text}).then(() => { byId('askText').value = ''; }).catch(() => {});
+};
+function renderAsk() {
+  const a = live.assistant;
+  if (!a) return;
+  const labels = {thinking: 'Thinking…', connecting: 'Connecting…', speaking: 'Speaking', muted: 'Quiet mode',
+                  offline: 'Offline', unconfigured: 'Voice not set up', busy: 'Busy', limited: 'Daily limit reached',
+                  failed: 'Something went wrong', stopped: 'Stopped', unavailable: 'Unavailable'};
+  const chip = byId('askStatus');
+  chip.textContent = labels[a.status] || '';
+  chip.classList.toggle('hidden', !labels[a.status]);
+  const reply = byId('askReply');
+  reply.textContent = a.question ? '“' + a.question + '” — ' + (a.reply || '…') : '';
+  reply.classList.toggle('hidden', !a.question);
+}
 function renderHome() {
+  renderAsk();
   const g = byId('glance'); g.replaceChildren();
   const add = (title, value) => g.append(el('div', {}, el('small', {text: title}), el('div', {class: 'big', style: 'font-size:1.15rem;font-weight:700', text: value})));
   add('Time', live.time ? live.time.slice(0, 5) : '--:--');
   add('Weather', live.temperature != null ? live.temperature + '°' + live.unit : '—');
+  if (live.room) add('Room', live.room.temperature.toFixed(1) + '°' + live.room.unit + ' · ' + live.room.humidity + '%');
   const running = live.timers.filter(t => t.phase === 'running');
   add('Timers', running.length ? clock(Math.max(0, Math.min(...running.map(t => t.remainingMs)) - since())) : 'none running');
   add('Focus', live.focus.running ? clock(Math.max(0, live.focus.remainingMs - since())) + ' ' + live.focus.phase : live.focus.fresh ? 'ready' : 'paused');
@@ -1148,6 +1182,104 @@ function renderNetworks() {
     el('button', {class: 'small ghost', text: 'Forget', on: {click: () => { if (confirm('Forget ' + name + '?')) post('/network/forget', {ssid: name}, 'Forgotten').then(loadSettings); }}}))));
 }
 byId('netAdd').onclick = () => post('/network', {ssid: byId('netSsid').value, password: byId('netPass').value, open: byId('netOpen').checked}, 'Saved: DeskMate is joining it').then(() => { byId('netPass').value = ''; loadSettings(); });
+// ======================= Sounds (1.14) =======================
+let soundsInfo = null, soundsLoading = false;
+async function loadSounds() {
+  soundsLoading = true;
+  try { soundsInfo = await api('GET', '/sounds'); renderSounds(); } catch (_) {}
+  soundsLoading = false;
+}
+const soundPost = (path, body, done) => api('POST', path, body).then(() => { if (done) toast(done); return loadSounds(); })
+  .catch(e => toast(e.message));
+function toneSelect(value, onChange) {
+  const sel = el('select');
+  soundsInfo.tones.forEach((name, i) => sel.append(el('option', {value: i, text: name})));
+  soundsInfo.mine.forEach(m => { if (m.seconds > 0) sel.append(el('option', {value: 100 + m.slot, text: 'My: ' + m.name})); });
+  sel.value = value;
+  sel.onchange = () => onChange(+sel.value);
+  return sel;
+}
+function renderSounds() {
+  if (!soundsInfo) return;
+  const theme = byId('sndTheme');
+  theme.replaceChildren(...soundsInfo.themes.map((t, i) => el('option', {value: i, text: t})));
+  theme.value = soundsInfo.theme;
+  theme.onchange = () => soundPost('/sound/theme', {theme: +theme.value, preview: true}, 'Theme saved');
+  for (const [id, key] of [['sndVol', 'sounds'], ['voiceVol', 'voice']]) {
+    const slider = byId(id), text = byId(id === 'sndVol' ? 'sndVolText' : 'voiceVolText');
+    slider.value = soundsInfo.volume[key];
+    text.textContent = slider.value + '/10';
+    slider.oninput = () => { text.textContent = slider.value + '/10'; };
+    slider.onchange = () => soundPost('/sound/volume', {[key]: +slider.value, preview: key === 'sounds'});
+  }
+  byId('sndChirps').checked = soundsInfo.chirps;
+  byId('sndChirps').onchange = e => soundPost('/sound/chirps', {on: e.target.checked});
+  const list = byId('toneList'); list.replaceChildren();
+  const row = (title, value, kind, i) => {
+    const play = el('button', {class: 'small ghost', text: '▶', title: 'Play on DeskMate'});
+    const sel = toneSelect(value, tone => soundPost('/sound/choice', {kind, i, tone}, 'Tone saved'));
+    play.onclick = () => api('POST', '/sound/preview', {tone: +sel.value}).catch(e => toast(e.message));
+    list.append(el('div', {class: 'item'}, el('div', {class: 'main'}, el('div', {text: title}), sel), play));
+  };
+  const c = soundsInfo.choices;
+  c.alarms.forEach((v, i) => row((data && data.alarms[i] ? data.alarms[i].label : 'Alarm ' + (i + 1)), v, 'alarm', i));
+  c.timers.forEach((v, i) => row('Timer ' + (i + 1), v, 'timer', i));
+  row('Boot chime', c.boot, 'boot', 0);
+  row('Hourly chime', c.hourly, 'hourly', 0);
+  const mine = byId('mySoundList'); mine.replaceChildren();
+  soundsInfo.mine.forEach(m => {
+    const actions = [];
+    if (m.seconds > 0) {
+      const play = el('button', {class: 'small ghost', text: '▶'});
+      play.onclick = () => api('POST', '/sound/preview', {tone: 100 + m.slot}).catch(e => toast(e.message));
+      const rename = el('button', {class: 'small ghost', text: 'Rename'});
+      rename.onclick = () => { const n = prompt('Name', m.name); if (n) soundPost('/sound/rename', {slot: m.slot, name: n.slice(0, 23)}, 'Renamed'); };
+      const del = el('button', {class: 'small ghost', text: 'Delete'});
+      del.onclick = () => { if (confirm('Delete "' + m.name + '"? Anything ringing with it goes back to its theme tone.')) soundPost('/sound/delete', {slot: m.slot}, 'Deleted'); };
+      actions.push(play, rename, del);
+    }
+    const pick = el('input', {type: 'file', accept: 'audio/*', class: 'hidden'});
+    const up = el('button', {class: 'small', text: m.seconds > 0 ? 'Replace' : 'Upload'});
+    up.onclick = () => { if (away) toast('Upload at home: open DeskMate on your Wi-Fi.'); else pick.click(); };
+    pick.onchange = () => pick.files[0] && uploadSound(m.slot, pick.files[0]);
+    mine.append(el('div', {class: 'item'}, el('div', {class: 'main'},
+      el('div', {text: m.seconds > 0 ? m.name : 'Empty slot ' + (m.slot + 1)}),
+      el('div', {class: 'sub', text: m.seconds > 0 ? m.seconds.toFixed(1) + ' s' : ''})), ...actions, up, pick));
+  });
+}
+// Converts any audio file to DeskMate's format in the browser: mono, 16 kHz, 16-bit, up to
+// 15 s, levelled to -0.5 dB, with 15 ms fades so it never clicks.
+async function uploadSound(slot, file) {
+  try {
+    toast('Converting…');
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
+    ctx.close();
+    const seconds = Math.min(decoded.duration, 15);
+    if (seconds < 0.5) throw new Error('That sound is under half a second.');
+    const off = new OfflineAudioContext(1, Math.ceil(seconds * 16000), 16000);
+    const src = off.createBufferSource();
+    src.buffer = decoded; src.connect(off.destination); src.start(0);
+    const pcm = (await off.startRendering()).getChannelData(0);
+    let peak = 0;
+    for (const v of pcm) peak = Math.max(peak, Math.abs(v));
+    const gain = peak > 0 ? 0.944 / peak : 1, fade = 240, out = new Int16Array(pcm.length);
+    for (let i = 0; i < pcm.length; i++) {
+      const edge = Math.min(1, i / fade, (pcm.length - 1 - i) / fade);
+      out[i] = Math.max(-32767, Math.min(32767, Math.round(pcm[i] * gain * edge * 32767)));
+    }
+    toast('Uploading…');
+    const name = file.name.replace(/\.[^.]+$/, '').slice(0, 23);
+    const r = await fetch('/api/sound?slot=' + slot + '&name=' + encodeURIComponent(name),
+      {method: 'POST', headers: {'X-DeskMate-Token': token, 'Content-Type': 'application/octet-stream'}, body: out.buffer});
+    if (!r.ok) throw new Error((await r.text().catch(() => '')) || 'Upload failed.');
+    toast('Saved "' + name + '"');
+    loadSounds();
+  } catch (e) {
+    toast(e.message || 'That file could not be read.');
+  }
+}
+
 function renderUpdate() {
   byId('updateText').textContent = live.update ? 'DeskMate ' + live.update + ' is out (running ' + live.version + ').' : 'Running ' + live.version + '. DeskMate checks for signed releases every 12 hours.';
   byId('updateInstall').classList.toggle('hidden', !live.update);

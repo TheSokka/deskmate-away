@@ -1,7 +1,7 @@
 {
-  "version": "1.12.1",
-  "size": 1891916,
-  "sha256": "b21e966ac2803aa80d6ae9c007647ddb66a4030902a9be21e8051c646fb2722c",
-  "url": "DeskMateOS-1.12.1.bin",
-  "notes": "Hosted live voice, a longer wait for startup networking, and steadier speaker scheduling."
+  "version": "1.15.0",
+  "size": 1988238,
+  "sha256": "14daa9d07c8d685b1c4cb15380f8025c8785f0d481cb700ef6c42c5d920e382f",
+  "url": "DeskMateOS-1.15.0.bin",
+  "notes": "Seven distinct sound themes, app and weather cues, and custom OLED transitions."
 }
