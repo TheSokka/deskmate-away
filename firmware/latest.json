@@ -1,7 +1,7 @@
 {
-  "version": "1.16.1",
-  "size": 1993516,
-  "sha256": "fe44c7a102398b56a085e54b25a7b304b853907e725e716bc8a311f6f2fd5b44",
-  "url": "DeskMateOS-1.16.1.bin",
-  "notes": "Start voice setup from Speak, reuse the secure connection, and move health log writes off the main loop."
+  "version": "1.16.2",
+  "size": 1994109,
+  "sha256": "c726ac16dedef0c25d1bb4908986052083de4b5e1e8c30248cde8fff04d590ab",
+  "url": "DeskMateOS-1.16.2.bin",
+  "notes": "Prepare the voice connection early and move session saves off the navigation loop."
 }
