@@ -240,9 +240,16 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <label>Sounds volume <b id="sndVolText"></b><input id="sndVol" type="range" min="0" max="10" step="1"></label>
 <label>Voice volume <b id="voiceVolText"></b><input id="voiceVol" type="range" min="0" max="10" step="1"></label>
 <label><input id="sndChirps" type="checkbox"> Companion chirps</label>
+<label>Motion<select id="motionPreset"></select></label>
 <details><summary>Ring tones</summary><div class="list" id="toneList"></div></details>
 <details><summary>My sounds</summary><div class="list" id="mySoundList"></div>
 <small class="mute" id="mySoundHint">Any audio file. DeskMate keeps up to 15 s of it, converted here in your browser. Upload at home.</small></details>
+</div>
+<div class="card" id="headsCard"><h2><span>Heads-ups</span></h2>
+<label>When DeskMate notices something<select id="headsMode"><option value="2">Show it and say it</option><option value="1">Show it only</option><option value="0">Off</option></select></label>
+<label><input id="headsSky" type="checkbox"> Sky events (meteor showers, full moons, eclipses)</label>
+<small class="mute">Weather tips, official US weather warnings, your countdowns and the room. One at a time; quiet mode and night keep it to the screen.</small>
+<details><summary>Today's notices</summary><div class="list" id="noticeList"></div></details>
 </div>
 <div class="card"><h2><span>Wi-Fi networks</span></h2><div class="list" id="networkList"></div>
 <details><summary>Add a network</summary><label>Name<input id="netSsid" maxlength="32" autocomplete="off"></label>
@@ -760,7 +767,7 @@ function render() {
   if (current === 'timers' && !busy('timerList')) renderTimers();
   if (current === 'focus') renderFocus();
   if (current === 'tasks') { if (editingTask < 0 && !busy('taskList')) renderTasks(); if (editingEvent < 0 && !busy('eventList')) renderEvents(); }
-  if (current === 'more') { renderUpdate(); if (!soundsInfo && !soundsLoading) loadSounds(); }
+  if (current === 'more') { renderUpdate(); if (!soundsInfo && !soundsLoading) { loadSounds(); loadHeads(); } }
   const banner = byId('releaseBanner');
   banner.classList.toggle('hidden', !live.update);
   if (live.update) byId('releaseText').textContent = 'DeskMate ' + live.update + ' is out.';
@@ -775,6 +782,13 @@ byId('askForm').onsubmit = e => {
   if (!text) return;
   post('/ask', {text}).then(() => { byId('askText').value = ''; }).catch(() => {});
 };
+// 1.17: typing a question opens DeskMate's assistant connection, so the answer starts sooner.
+let askWarmedAt = 0;
+byId('askText').addEventListener('input', () => {
+  if (Date.now() - askWarmedAt < 30000) return;
+  askWarmedAt = Date.now();
+  api('POST', '/voice/warm', {}).catch(() => {});
+});
 function renderAsk() {
   const a = live.assistant;
   if (!a) return;
@@ -942,9 +956,11 @@ function daysPicker(mask) {
 }
 function readDays(container) { let m = 0; container.querySelectorAll('input[data-bit]').forEach(i => { if (i.checked) m |= 1 << i.dataset.bit; }); return m; }
 function daysText(mask) { return mask === 127 ? 'Every day' : mask === 62 ? 'Weekdays' : mask === 65 ? 'Weekends' : DAYS.filter((_, b) => mask & (1 << b)).join(' ') || 'No days'; }
+// Same rule as DeskMate (Model.cpp): unused means exactly as it ships.
+function alarmInUse(a, i) { return a.enabled || a.once || a.minute !== 420 || a.days !== 127 || a.label !== 'Alarm ' + (i + 1); }
 function renderAlarms() {
   const list = byId('alarmList'); list.replaceChildren();
-  const used = data.alarms.map((a, i) => ({a, i})).filter(({a, i}) => a.enabled || i === editingAlarm || a.label !== 'Alarm ' + (i + 1) || a.minute !== 420);
+  const used = data.alarms.map((a, i) => ({a, i})).filter(({a, i}) => i === editingAlarm || alarmInUse(a, i));
   if (!used.length) list.append(el('p', {class: 'mute', text: 'No alarms yet. Add one with ＋ New.'}));
   used.forEach(({a, i}) => {
     if (i === editingAlarm) return list.append(alarmEditor(a, i));
@@ -956,10 +972,12 @@ function renderAlarms() {
 function alarmEditor(a, i) {
   const label = el('input', {maxlength: 28, value: a.label}), time = el('input', {type: 'time', value: hhmm(a.minute)});
   const days = daysPicker(a.days || 127), once = el('input', {type: 'checkbox', checked: a.once, class: 'fit'});
+  const brief = el('input', {type: 'checkbox', checked: !!a.briefing, class: 'fit'});
   return el('div', {class: 'item', style: 'display:block'}, el('div', {class: 'grid2'}, el('label', {}, 'Time', time), el('label', {}, 'Name', label)), days,
     el('label', {class: 'row'}, once, el('span', {text: 'Ring once, then switch off'})),
+    el('label', {class: 'row'}, brief, el('span', {text: 'Morning briefing when I stop it (weather, plans, no news)'})),
     el('div', {class: 'row', style: 'margin-top:.5rem'},
-      el('button', {text: 'Save', on: {click: () => post('/alarm', {i, label: label.value, minute: readHHMM(time.value), days: readDays(days), once: once.checked, enabled: true}, 'Alarm saved').then(() => { editingAlarm = -1; renderAlarms(); })}}),
+      el('button', {text: 'Save', on: {click: () => post('/alarm', {i, label: label.value, minute: readHHMM(time.value), days: readDays(days), once: once.checked, briefing: brief.checked, enabled: true}, 'Alarm saved').then(() => { editingAlarm = -1; renderAlarms(); })}}),
       el('button', {class: 'ghost', text: 'Cancel', on: {click: () => { editingAlarm = -1; renderAlarms(); }}}),
       el('button', {class: 'bad fit', text: 'Delete', on: {click: () => post('/alarm/delete', {i}, 'Alarm deleted').then(() => { editingAlarm = -1; renderAlarms(); })}})));
 }
@@ -1182,6 +1200,22 @@ function renderNetworks() {
     el('button', {class: 'small ghost', text: 'Forget', on: {click: () => { if (confirm('Forget ' + name + '?')) post('/network/forget', {ssid: name}, 'Forgotten').then(loadSettings); }}}))));
 }
 byId('netAdd').onclick = () => post('/network', {ssid: byId('netSsid').value, password: byId('netPass').value, open: byId('netOpen').checked}, 'Saved: DeskMate is joining it').then(() => { byId('netPass').value = ''; loadSettings(); });
+// ======================= Heads-ups (1.17) =======================
+async function loadHeads() {
+  let info;
+  try { info = await api('GET', '/notices'); } catch (_) { return; }
+  byId('headsMode').value = info.mode;
+  byId('headsMode').onchange = e => api('POST', '/headsups', {mode: +e.target.value}).then(() => toast('Saved')).catch(x => toast(x.message));
+  byId('headsSky').checked = info.sky;
+  byId('headsSky').onchange = e => api('POST', '/headsups', {sky: e.target.checked}).then(() => toast('Saved')).catch(x => toast(x.message));
+  const list = byId('noticeList'); list.replaceChildren();
+  if (!info.notices.length) list.append(el('p', {class: 'mute', text: 'Nothing yet today.'}));
+  const marks = {notice: '✱', warning: '⚠', error: '⨯', info: 'i'};
+  info.notices.forEach(n => list.append(el('div', {class: 'item'}, el('div', {class: 'main'},
+    el('div', {text: (marks[n.kind] || '') + ' ' + n.title}),
+    el('div', {class: 'sub', text: (n.minute >= 0 ? String(Math.floor(n.minute / 60)).padStart(2, '0') + ':' + String(n.minute % 60).padStart(2, '0') + ' · ' : '') + n.text})))));
+}
+
 // ======================= Sounds (1.14) =======================
 let soundsInfo = null, soundsLoading = false;
 async function loadSounds() {
@@ -1212,6 +1246,10 @@ function renderSounds() {
     slider.oninput = () => { text.textContent = slider.value + '/10'; };
     slider.onchange = () => soundPost('/sound/volume', {[key]: +slider.value, preview: key === 'sounds'});
   }
+  const motion = byId('motionPreset');
+  motion.replaceChildren(...(soundsInfo.motions || []).map((m, i) => el('option', {value: i, text: m})));
+  motion.value = soundsInfo.motion;
+  motion.onchange = () => soundPost('/motion', {preset: +motion.value}, 'Motion: ' + motion.selectedOptions[0].text);
   byId('sndChirps').checked = soundsInfo.chirps;
   byId('sndChirps').onchange = e => soundPost('/sound/chirps', {on: e.target.checked});
   const list = byId('toneList'); list.replaceChildren();

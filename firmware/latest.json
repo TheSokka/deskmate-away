@@ -1,7 +1,7 @@
 {
-  "version": "1.16.3",
-  "size": 1994636,
-  "sha256": "1d4a699c8ce1fb1467826a0b2df51d573d60a4e1977c928a8b1186fff10a94f8",
-  "url": "DeskMateOS-1.16.3.bin",
-  "notes": "Keep warmed speech independent of downloads and move room sensor sampling off the navigation loop."
+  "version": "1.17.1",
+  "size": 2029308,
+  "sha256": "7756c2ecf3a527dc5e48b64a47f58c4c311f4ad4a1816dd3565bbce7603d4138",
+  "url": "DeskMateOS-1.17.1.bin",
+  "notes": "Windows, heads-ups, alarm briefings, 12 sound themes, motion presets and a faster voice."
 }
