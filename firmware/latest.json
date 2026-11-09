@@ -1,7 +1,7 @@
 {
-  "version": "1.15.2",
-  "size": 1988941,
-  "sha256": "33773d0146c241633682fe61b3214f8920b0f80aee98e1592c7710f8eeeaf01e",
-  "url": "DeskMateOS-1.15.2.bin",
-  "notes": "Add tactile ticks that follow the weather graph as it draws."
+  "version": "1.16.0",
+  "size": 1990717,
+  "sha256": "11faa118ba8be174df51c6aa347cb23ec34257507ed40f1a252e6291b153a1fe",
+  "url": "DeskMateOS-1.16.0.bin",
+  "notes": "Prioritize live voice, replay recent speech instantly, and reduce UI stalls."
 }
