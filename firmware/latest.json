@@ -1,7 +1,7 @@
 {
-  "version": "1.16.2",
-  "size": 1994109,
-  "sha256": "c726ac16dedef0c25d1bb4908986052083de4b5e1e8c30248cde8fff04d590ab",
-  "url": "DeskMateOS-1.16.2.bin",
-  "notes": "Prepare the voice connection early and move session saves off the navigation loop."
+  "version": "1.16.3",
+  "size": 1994636,
+  "sha256": "1d4a699c8ce1fb1467826a0b2df51d573d60a4e1977c928a8b1186fff10a94f8",
+  "url": "DeskMateOS-1.16.3.bin",
+  "notes": "Keep warmed speech independent of downloads and move room sensor sampling off the navigation loop."
 }
