@@ -1,7 +1,7 @@
 {
-  "version": "1.15.1",
-  "size": 1988493,
-  "sha256": "413a396d918cb57f5308827ed3ea7631ebdb59a5cd09833a7c42deb42ffd4b67",
-  "url": "DeskMateOS-1.15.1.bin",
-  "notes": "Sync the weather graph sound to its animation and add an App sounds switch."
+  "version": "1.15.2",
+  "size": 1988941,
+  "sha256": "33773d0146c241633682fe61b3214f8920b0f80aee98e1592c7710f8eeeaf01e",
+  "url": "DeskMateOS-1.15.2.bin",
+  "notes": "Add tactile ticks that follow the weather graph as it draws."
 }
