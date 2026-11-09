@@ -1,7 +1,7 @@
 {
-  "version": "1.17.2",
-  "size": 2029246,
-  "sha256": "458bfa5d25546b2804405d3f5d6342d61a223f3b29a3b05ed52b5ee638780e11",
-  "url": "DeskMateOS-1.17.2.bin",
-  "notes": "Fixes restarts while browsing settings: more room for the main loop, and crash reports."
+  "version": "1.17.3",
+  "size": 2036397,
+  "sha256": "42cb3b7017c24a98093d2e14f461f9898213c7b747ae48c061f17424aee4383a",
+  "url": "DeskMateOS-1.17.3.bin",
+  "notes": "Screen-aware Ask DeskMate, timer adjustments with undo, and calendar-aware work timers with on-screen confirmation."
 }
