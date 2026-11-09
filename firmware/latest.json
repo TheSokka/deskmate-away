@@ -1,7 +1,7 @@
 {
-  "version": "1.16.0",
-  "size": 1990717,
-  "sha256": "11faa118ba8be174df51c6aa347cb23ec34257507ed40f1a252e6291b153a1fe",
-  "url": "DeskMateOS-1.16.0.bin",
-  "notes": "Prioritize live voice, replay recent speech instantly, and reduce UI stalls."
+  "version": "1.16.1",
+  "size": 1993516,
+  "sha256": "fe44c7a102398b56a085e54b25a7b304b853907e725e716bc8a311f6f2fd5b44",
+  "url": "DeskMateOS-1.16.1.bin",
+  "notes": "Start voice setup from Speak, reuse the secure connection, and move health log writes off the main loop."
 }
