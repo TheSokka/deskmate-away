@@ -1,7 +1,7 @@
 {
-  "version": "1.15.0",
-  "size": 1988238,
-  "sha256": "14daa9d07c8d685b1c4cb15380f8025c8785f0d481cb700ef6c42c5d920e382f",
-  "url": "DeskMateOS-1.15.0.bin",
-  "notes": "Seven distinct sound themes, app and weather cues, and custom OLED transitions."
+  "version": "1.15.1",
+  "size": 1988493,
+  "sha256": "413a396d918cb57f5308827ed3ea7631ebdb59a5cd09833a7c42deb42ffd4b67",
+  "url": "DeskMateOS-1.15.1.bin",
+  "notes": "Sync the weather graph sound to its animation and add an App sounds switch."
 }
