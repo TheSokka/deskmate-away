@@ -84,10 +84,17 @@ input[type=checkbox]{width:auto}label{display:block;margin:.55rem 0;font-size:.9
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#7fe3d8));border-radius:inherit;transition:width .3s linear}
 .timer.idle .bar{opacity:0}
 #deskChart rect{transform-box:fill-box;transform-origin:50% 100%;animation:grow .7s var(--ease) both}
-#healthChart polyline{stroke-dasharray:1200;animation:draw 1.2s var(--ease) both}
 @keyframes grow{from{transform:scaleY(0)}}@keyframes draw{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}
 #settingsForm .card>.item{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;font-size:.92rem}#settingsForm .card>.item .main{flex:1}
 #settingsForm .card>.item+label,#settingsForm .card>label+.item{border-top:1px solid var(--line)}
+/* 1.26: groups like the menu on DeskMate, a help line under each setting, and a mark where it is not at its default */
+.gh{margin:1.3rem 0 .5rem;font-size:.78rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);column-span:all}
+.help{font-weight:400;margin:.12rem 0 .25rem;font-size:.78rem}
+.chg{display:inline-block;width:.45rem;height:.45rem;border-radius:50%;background:var(--accent);margin-left:.45rem;vertical-align:middle}
+.card .reset{margin-top:.7rem}
+#resetCard .row{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.7rem}
+button.danger{color:var(--bad);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--bad) 60%,transparent)}
+.legend{margin:.2rem 0 .8rem}
 .chip .key{display:inline-block;width:.6rem;height:.6rem;border-radius:.2rem;margin-right:.35rem;vertical-align:-.02rem}
 @media (hover:none){.keys{display:none}}
 .locked{padding:0 .2rem .55rem;font-size:.8rem;color:var(--mute)}
@@ -129,13 +136,13 @@ details summary{cursor:pointer;font-weight:600;margin:.35rem 0;color:var(--accen
 #settingsEmpty{text-align:center;padding:2rem 0}
 /* Motion: each tab's cards rise in, one after another */
 @keyframes rise{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
-section.tab.on>*,#settingsForm>.card{animation:rise .42s var(--ease) both}
-section.tab.on>:nth-child(2),#settingsForm>.card:nth-child(2){animation-delay:.04s}
-section.tab.on>:nth-child(3),#settingsForm>.card:nth-child(3){animation-delay:.08s}
-section.tab.on>:nth-child(4),#settingsForm>.card:nth-child(4){animation-delay:.12s}
-section.tab.on>:nth-child(5),#settingsForm>.card:nth-child(5){animation-delay:.16s}
-section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-delay:.2s}
-#settingsForm.quiet>.card{animation:none}
+section.tab.on>*,#settingsForm .sgroup>.card{animation:rise .42s var(--ease) both}
+section.tab.on>:nth-child(2),#settingsForm .sgroup>.card:nth-child(2){animation-delay:.04s}
+section.tab.on>:nth-child(3),#settingsForm .sgroup>.card:nth-child(3){animation-delay:.08s}
+section.tab.on>:nth-child(4),#settingsForm .sgroup>.card:nth-child(4){animation-delay:.12s}
+section.tab.on>:nth-child(5),#settingsForm .sgroup>.card:nth-child(5){animation-delay:.16s}
+section.tab.on>:nth-child(n+6),#settingsForm .sgroup>.card:nth-child(n+6){animation-delay:.2s}
+#settingsForm.quiet .sgroup>.card{animation:none}
 .flash{animation:flash .9s var(--ease)}
 @keyframes flash{from{box-shadow:0 0 0 3px var(--accent),var(--shadow)}}
 /* Wide screens: a sidebar and room to breathe */
@@ -162,15 +169,15 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
   section.tab[data-tab=home]>.wide{grid-column:1/-1}
   section.tab[data-tab=home] .stage{position:sticky;top:5rem;padding:1.4rem}
   /* Most tabs: cards in balanced columns */
-  section.tab[data-tab=timers].on,section.tab[data-tab=tasks].on,section.tab[data-tab=more].on,#settingsForm{columns:2 22rem;column-gap:1.3rem}
-  section.tab.on>.card,#settingsForm>.card{break-inside:avoid}
+  section.tab[data-tab=timers].on,section.tab[data-tab=tasks].on,section.tab[data-tab=more].on,#settingsForm .sgroup{columns:2 22rem;column-gap:1.3rem}
+  section.tab.on>.card,#settingsForm .sgroup>.card{break-inside:avoid}
   section.tab[data-tab=settings] .search{max-width:30rem}
   section.tab[data-tab=alarms].on{max-width:46rem}
   section.tab[data-tab=focus].on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:0 1.3rem;align-items:start}
   section.tab[data-tab=focus]>.card:nth-child(3){grid-column:2;grid-row:1/span 2}
   .item .big{font-size:1.65rem}
 }
-@media (min-width:1400px){#settingsForm,section.tab[data-tab=more].on{columns:3 20rem}}
+@media (min-width:1400px){#settingsForm .sgroup,section.tab[data-tab=more].on{columns:3 20rem}}
 @media (min-width:900px){body.bare{padding-left:0}body.bare header h1 .logo,body.bare header h1 .brandName{display:flex}body.bare header h1 #tabTitle{display:none}body.bare header{border-bottom-color:var(--line)}}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
@@ -185,7 +192,6 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <p>At home, open <b>http://deskmate.local</b>, pair the browser, and scan the QR code under <b>More → Phone and away</b> with this phone.</p></div>
 
 <section class="tab" data-tab="home">
-<div id="hardwareBanner" class="card alertCard wide hidden" role="alert"></div>
 <div id="releaseBanner" class="card banner wide hidden"><div class="row"><span id="releaseText"></span><button class="fit small" id="releaseInstall">Install</button></div></div>
 <div class="card stage"><canvas id="screen" width="128" height="64" tabindex="0" aria-label="Live DeskMate screen. Arrow keys turn, Enter clicks, Escape holds, Space double-clicks."></canvas>
 <div class="knob">
@@ -232,9 +238,9 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 </section>
 
 <section class="tab" data-tab="settings"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-<input id="settingsSearch" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off"></div><div id="settingsForm"></div><p id="settingsEmpty" class="mute hidden">No setting matches that.</p></section>
-
-<section class="tab" data-tab="more">
+<input id="settingsSearch" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off"></div><small class="mute legend"><i class="chg"></i> is not at its default. Each section has its own reset.</small>
+<div id="settingsForm"></div>
+<div id="settingsHold" hidden>
 <div class="card" id="soundsCard"><h2><span>Sounds</span></h2>
 <label>Theme<select id="sndTheme"></select></label>
 <label>Sounds volume <b id="sndVolText"></b><input id="sndVol" type="range" min="0" max="10" step="1"></label>
@@ -244,13 +250,29 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <details><summary>Ring tones</summary><div class="list" id="toneList"></div></details>
 <details><summary>My sounds</summary><div class="list" id="mySoundList"></div>
 <small class="mute" id="mySoundHint">Any audio file. DeskMate keeps up to 15 s of it, converted here in your browser. Upload at home.</small></details>
+<button class="small ghost reset" id="resetSounds" type="button">Reset sounds</button>
 </div>
 <div class="card" id="headsCard"><h2><span>Heads-ups</span></h2>
 <label>When DeskMate notices something<select id="headsMode"><option value="2">Show it and say it</option><option value="1">Show it only</option><option value="0">Off</option></select></label>
 <label><input id="headsSky" type="checkbox"> Sky events (meteor showers, full moons, eclipses)</label>
+<fieldset class="kinds" id="alertKinds"><legend>Warnings that may sound</legend>
+<label><input type="checkbox" data-bit="1"> Weather warnings (tornado, flash flood, severe storm, dust storm)</label>
+<label><input type="checkbox" data-bit="2"> Civil danger (missile, attack, hazmat, shelter in place)</label>
+<label><input type="checkbox" data-bit="4"> AMBER Alerts</label>
+<label><input type="checkbox" data-bit="8"> Tsunami and earthquake</label>
+<small class="mute">A type switched off still shows its window; only the loud signal and the voice are skipped. A national alert and Japan's missile and special warnings always sound.</small></fieldset>
 <small class="mute">Weather tips, official US weather warnings, your countdowns and the room. One at a time; quiet mode and night keep it to the screen.</small>
 <details><summary>Today's notices</summary><div class="list" id="noticeList"></div></details>
+<button class="small ghost reset" id="resetAlerts" type="button">Reset alerts</button>
 </div>
+</div>
+<p id="settingsEmpty" class="mute hidden">No setting matches that.</p>
+<div class="card" id="resetCard"><h2><span>Reset</span></h2>
+<p class="mute">Reset settings puts every setting back to its default. Wi-Fi, your lists, pairings and location stay; IDE upload and the away relay turn off. A factory reset erases everything and asks for a click on DeskMate itself.</p>
+<div class="row"><button class="ghost" id="resetAll" type="button">Reset settings…</button><button class="ghost danger" id="factoryReset" type="button">Factory reset…</button></div></div>
+</section>
+
+<section class="tab" data-tab="more">
 <div class="card"><h2><span>Wi-Fi networks</span></h2><div class="list" id="networkList"></div>
 <details><summary>Add a network</summary><label>Name<input id="netSsid" maxlength="32" autocomplete="off"></label>
 <label>Password<input id="netPass" type="password" maxlength="63" autocomplete="new-password"></label>
@@ -264,16 +286,14 @@ section.tab.on>:nth-child(n+6),#settingsForm>.card:nth-child(n+6){animation-dela
 <canvas id="ntfyQr" width="0" height="0" aria-label="QR code with the ntfy subscription link"></canvas>
 <p><a id="ntfyLink" href="#" target="_blank" rel="noopener"></a></p>
 <div class="row"><button id="ntfyTest" class="ghost">Send a test</button></div><small id="ntfyStatus" class="mute"></small></div>
-<div class="card"><h2><span>Hardware check</span><button class="small ghost" id="hwCheck">Check again</button></h2><div class="list" id="hardwareList"></div>
-<small class="mute">DeskMate checks its parts when it starts and keeps watching them. A part that stops working is switched off so everything else carries on, and comes back by itself when it works again.</small></div>
-<div class="card"><h2><span>Health, last 7 days</span></h2><svg id="healthChart" viewBox="0 0 280 130" style="width:100%"></svg>
-<div class="chips"><span class="chip"><i class="key" style="background:var(--accent)"></i>Free memory, lowest each hour (top, to 64 KB)</span><span class="chip"><i class="key" style="background:var(--bad)"></i>Slowest loop pass (bottom, to 200 ms)</span></div><small id="healthNote" class="mute"></small></div>
+<div class="card"><h2><span>Support</span></h2>
+<p class="mute">Download your serial number, software version, and device diagnostics in a file you can review and share.</p>
+<button class="ghost" id="supportReport" type="button">Download support report</button></div>
 <div class="card"><h2><span>Software update</span></h2><p id="updateText" class="mute">Checking…</p>
 <div class="row"><button id="updateCheck" class="ghost">Check now</button><button id="updateInstall" class="hidden">Install</button></div>
 <details class="home-only"><summary>Upload a signed build instead</summary><input id="firmware" type="file" accept=".bin,application/octet-stream">
 <button id="upload" style="margin-top:.5rem">Upload and install</button><progress id="uploadProgress" max="100" value="0" class="hidden" style="width:100%"></progress>
-<small id="uploadResult"></small><small>Only firmware signed with your DeskMate key installs (<code>tools/release.sh --sign-only</code>).</small></details></div>
-<div class="card"><h2><span>Event log</span><button class="small ghost" id="logRefresh">Refresh</button></h2><pre id="log">…</pre></div>
+<small id="uploadResult"></small><small>DeskMate only accepts signed update files.</small></details></div>
 <div class="card"><small id="transportNote"></small><p><a href="#" id="forget">Unpair this browser</a></p></div>
 </section>
 </main>
@@ -623,7 +643,7 @@ transport.away = {
     return new Promise(async (resolve, reject) => {
       const id = ++requestId;
       const timer = setTimeout(() => { waiting.delete(id); reject(new Error('DeskMate did not answer. Try again.')); }, wait);
-      waiting.set(id, reply => { clearTimeout(timer); waiting.delete(id); reply.s === 200 ? resolve(reply.b || {}) : reject(new Error((reply.b && reply.b.error) || ('Error ' + reply.s))); });
+      waiting.set(id, reply => { clearTimeout(timer); waiting.delete(id); reply.s >= 200 && reply.s < 300 ? resolve(reply.b || {}) : reject(new Error((reply.b && reply.b.error) || ('Error ' + reply.s))); });
       const request = JSON.stringify({id, m: method, p: path, b: method === 'POST' ? JSON.stringify(body || {}) : ''});
       if (!await relaySend('q', text.encode(request))) { clearTimeout(timer); waiting.delete(id); reject(new Error('Not connected to the relay yet.')); }
     });
@@ -711,7 +731,6 @@ function go(tab) {
   if (document.body.classList.contains('bare')) return;  // Not paired yet: nothing to show.
   document.querySelectorAll('section.tab').forEach(s => s.classList.toggle('on', s.dataset.tab === tab));
   if (tab === 'settings' || tab === 'more') loadSettings();
-  if (tab === 'more') { loadLog(); loadHistory(); loadHardware(); }
   if (tab === 'home') { loadAgenda(); if (!prefs) loadSettings(); }
   if (tab === 'focus') loadHistory();
   render();
@@ -751,9 +770,7 @@ let zones = null, agenda = null, historyData = null;
 async function loadZones() { if (!zones) { try { zones = (await api('GET', '/zones')).zones; } catch (_) {} } }
 async function loadSettings() { try { await loadZones(); prefs = await api('GET', '/settings'); renderSettings(); renderNetworks(); renderNtfy(); renderWorld(); } catch (_) {} }
 async function loadAgenda() { try { agenda = await api('GET', '/agenda'); renderAgenda(); } catch (_) {} }
-async function loadHistory() { try { historyData = await api('GET', '/history'); renderDesk(); renderHealth(); } catch (_) {} }
-async function loadLog() { try { byId('log').textContent = (await api('GET', '/log')).text || 'No events yet.'; } catch (e) { byId('log').textContent = e.message; } }
-byId('logRefresh').onclick = loadLog;
+async function loadHistory() { try { historyData = await api('GET', '/history'); renderDesk(); } catch (_) {} }
 
 // Live times keep counting between updates.
 const since = () => live ? Date.now() - stateAt : 0;
@@ -761,13 +778,13 @@ const since = () => live ? Date.now() - stateAt : 0;
 const busy = id => { const box = byId(id); return box.contains(document.activeElement) || !!box.querySelector('details[open]'); };
 function render() {
   if (!live || !data) return;
-  renderHardwareBanner();
   if (current === 'home') renderHome();
   if (current === 'alarms' && editingAlarm < 0 && !busy('alarmList')) renderAlarms();
   if (current === 'timers' && !busy('timerList')) renderTimers();
   if (current === 'focus') renderFocus();
   if (current === 'tasks') { if (editingTask < 0 && !busy('taskList')) renderTasks(); if (editingEvent < 0 && !busy('eventList')) renderEvents(); }
-  if (current === 'more') { renderUpdate(); if (!soundsInfo && !soundsLoading) { loadSounds(); loadHeads(); } }
+  if (current === 'more') renderUpdate();
+  if ((current === 'more' || current === 'settings') && !soundsInfo && !soundsLoading) { loadSounds(); loadHeads(); }
   const banner = byId('releaseBanner');
   banner.classList.toggle('hidden', !live.update);
   if (live.update) byId('releaseText').textContent = 'DeskMate ' + live.update + ' is out.';
@@ -819,24 +836,24 @@ function renderHome() {
   if (live.streak) add('Focus streak', live.streak + (live.streak === 1 ? ' day' : ' days'));
   renderWorld();
 }
-// ---- 1.9.1: hardware check ----
-function renderHardwareBanner() {
-  const problems = (live && live.hardware) || [], banner = byId('hardwareBanner');
-  banner.classList.toggle('hidden', !problems.length);
-  banner.replaceChildren(...problems.map(p => el('div', {}, el('b', {text: p.name + (p.state === 'failed' ? ' not working' : ' acting up')}),
-    el('div', {style: 'opacity:.85;font-size:.9rem', text: p.detail + (p.effect ? ' · ' + p.effect : '')}))));
-}
-async function loadHardware() {
+byId('supportReport').onclick = async (e) => {
+  const button = e.currentTarget;
+  button.disabled = true;
   try {
-    const hw = await api('GET', '/hardware');
-    const icons = {ok: '✓', failed: '✕', warning: '!', checking: '…', off: '–', 'not testable': '·'};
-    byId('hardwareList').replaceChildren(...hw.modules.map(m => el('div', {class: 'item'},
-      el('div', {style: 'width:1.4rem;text-align:center;font-weight:700;color:' + (m.state === 'failed' ? 'var(--bad)' : m.state === 'warning' ? '#d4a017' : m.state === 'ok' ? 'var(--good)' : 'var(--mute)'), text: icons[m.state] || '?'}),
-      el('div', {class: 'main'}, el('div', {text: m.name}), el('div', {class: 'sub', text: m.state === 'ok' ? 'Working' : [m.detail || m.state, m.effect].filter(Boolean).join(' · ')})))));
-  } catch (_) {}
-}
-byId('hwCheck').onclick = () => post('/hardware/check', {}, 'Checking again').then(() => setTimeout(loadHardware, 4000));
-// ---- 1.9: agenda, world clocks, desk history, phone alerts and health ----
+    const report = await api('GET', '/support-report');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2) + '\n'], {type: 'application/json'}));
+    const download = el('a', {href: url, download: 'DeskMate-support.json'});
+    document.body.append(download);
+    download.click();
+    download.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch (error) {
+    toast(error.message || 'Could not download the support report.');
+  } finally {
+    button.disabled = false;
+  }
+};
+// ---- 1.9: agenda, world clocks, desk history and phone alerts ----
 const timeAt = unix => { const d = new Date(unix * 1000); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
 function renderAgenda() {
   const list = byId('agendaList'); list.replaceChildren();
@@ -889,27 +906,7 @@ function renderDesk() {
    ['Last 7 days', hm(sum(1)) + ' desk · ' + hm(sum(2)) + ' focus · ' + sum(3) + ' sessions']].forEach(([k, v]) =>
     totals.append(el('span', {class: 'chip', text: k + ': ' + v})));
 }
-function renderHealth() {
-  if (!historyData) return;
-  const chart = byId('healthChart'); chart.replaceChildren();
-  const hours = historyData.hours.slice(-168);
-  if (!hours.length) { byId('healthNote').textContent = 'Hourly snapshots start once DeskMate has the time.'; return; }
-  const first = hours[hours.length - 1][0] - 167;
-  const x = h => (h - first) * 280 / 168;
-  // Lowest free memory per hour (top half, 0-64 KB) and the slowest loop pass (bottom half, 0-200 ms).
-  const line = (pick, scale, base, color) => chart.append(svg('polyline', {fill: 'none', stroke: color, 'stroke-width': 1.3,
-    points: hours.map(r => x(r[0]).toFixed(1) + ',' + (base - Math.min(1, pick(r) / scale) * 50).toFixed(1)).join(' ')}));
-  [[58, 'Free memory, lowest each hour (to 64 KB)'], [118, 'Slowest loop pass each hour (to 200 ms)']].forEach(([y, t]) => {
-    chart.append(svg('line', {x1: 0, x2: 280, y1: y, y2: y, stroke: '#8884'}));
-  });
-  line(r => r[1], 64, 58, 'var(--accent)');
-  line(r => r[2], 200, 118, 'var(--bad)');
-  hours.filter(r => r[4]).forEach(r => chart.append(svg('line', {x1: x(r[0]), x2: x(r[0]), y1: 4, y2: 118, stroke: 'var(--bad)', 'stroke-dasharray': '2 2'})));
-  const low = Math.min(...hours.map(r => r[1])), slow = Math.max(...hours.map(r => r[2]));
-  const resets = hours.reduce((a, r) => a + r[4], 0), drops = hours.reduce((a, r) => a + r[3], 0);
-  byId('healthNote').textContent = 'Lowest ' + low + ' KB free · slowest loop ' + slow + ' ms · ' + resets + ' restart' + (resets === 1 ? '' : 's') +
-    ' (dashed) · ' + drops + ' Wi-Fi drop' + (drops === 1 ? '' : 's');
-}
+
 function renderNtfy() {
   if (!prefs || !prefs.ntfyTopic) return;
   const link = 'https://ntfy.sh/' + prefs.ntfyTopic;
@@ -935,7 +932,6 @@ function nextAlarm() {
 
 // Every 250 ms: only the numbers that count, so nothing under the cursor is rebuilt.
 function tick() {
-  renderHardwareBanner();
   if (current === 'home') renderHome();
   if (current === 'focus') renderFocus();
   if (current === 'timers') {
@@ -1097,8 +1093,8 @@ const SETTINGS = [
                        ['nightStart', 'Night starts', 'time'], ['nightEnd', 'Night ends', 'time']]],
   ['Presence', [['presence', 'Sense when you are at the desk', 'toggle'], ['presenceCm', 'Desk distance (cm)', 'number', 40, 250], ['awayMinutes', 'Blank after away (min)', 'number', 1, 60],
                 ['standMinutes', 'Stand-up nudge after (min, 0 off)', 'number', 0, 120], ['autoPauseFocus', 'Pause focus when away', 'toggle'], ['gestures', 'Hand gestures', 'toggle']]],
-  ['Knob', [['knobReverse', 'Reverse direction', 'toggle'], ['knobEdges', 'Edges per click', 'select', {4: '4 (most knobs)', 2: '2', 1: '1'}],
-            ['knobDoubleMs', 'Double-click', 'select', {170: 'Fast', 250: 'Normal', 350: 'Relaxed'}], ['knobAccel', 'Momentum', 'select', ['Off', 'Gentle', 'Fast']]]],
+  ['Knob', [['knobReverse', 'Reverse direction', 'toggle'], ['knobEdges', 'Click type', 'select', {4: '4 edges (most knobs)', 2: '2 edges', 1: '1 edge'}],
+            ['knobDoubleMs', 'Double-click', 'select', {170: 'Fast', 250: 'Normal', 350: 'Relaxed'}], ['knobAccel', 'Speed-up', 'select', ['Off', 'Gentle', 'Fast']]]],
   ['Calendar', [['calendarUrl', 'Private calendar link (https or webcal .ics)', 'calendar'], ['calendarChime', 'Chime 5 minutes before events', 'toggle']]],
   ['Wellness', [['waterMinutes', 'Drink-water reminder', 'select', {0: 'Off', 30: 'Every 30 min', 45: 'Every 45 min', 60: 'Every hour', 90: 'Every 90 min', 120: 'Every 2 hours'}],
                 ['eyeBreaks', 'Eye breaks (20-20-20, at the desk)', 'toggle']]],
@@ -1114,80 +1110,228 @@ function saveSetting(key, value, input) {
   post('/settings', {[key]: value}, 'Saved').then(() => { if (prefs) prefs[key] = value; }).catch(() => { if (prefs && input) setInput(input, prefs[key]); });
 }
 function setInput(input, value) { if (input.type === 'checkbox') input.checked = !!value; else input.value = input.dataset.kind === 'time' ? hhmm(value) : value; }
+// 1.26: the groups match the menu on DeskMate. A card name starting with # is one of the cards that live in the page itself.
+const GROUPS = [
+  ['Display & clock', ['Display', 'Clock', 'Appearance']],
+  ['Sound & alerts', ['Sound', 'Quiet and night', '#soundsCard', '#headsCard']],
+  ['Input', ['Knob', 'Presence']],
+  ['Connections', ['Connections', 'Phone alerts']],
+  ['Your day', ['Calendar', 'Wellness', 'World clocks', 'Weather and news']],
+];
+const CARD_RESET = {Display: 'display', Clock: 'clock', Appearance: 'appearance', Sound: 'sound', Knob: 'knob'};
+// What each setting does, in a line (it is searchable too).
+const HELP = {
+  brightnessPercent: 'How bright the screen is while you use it.',
+  dimSeconds: 'Seconds without use before the screen dims, or shows its ambient scene. 0 keeps it bright.',
+  sleepSeconds: 'Seconds before the screen goes fully dark. 0 never.',
+  idleMode: 'What the screen does when you are away: just dim, or show a slow scene.',
+  ambientScene: 'Which scene the ambient screen shows. Auto follows the weather and the time.',
+  ambientBrightness: 'How bright the ambient scene is (kept low to protect the screen).',
+  clockFace: 'The clock on Home.',
+  homeSeconds: 'Show seconds on the Home clock.',
+  timezone: 'A time zone rule such as MST7 or EST5EDT,M3.2.0,M11.1.0.',
+  fahrenheit: 'Temperatures in °F instead of °C.',
+  animation: 'How much things move. Off makes everything instant.',
+  transition: 'How a page arrives: slide, fade, zoom or none.',
+  companion: 'The little face on Home that reacts to you.',
+  expressive: 'The face blinks and looks at the knob more.',
+  burnIn: 'Shifts the picture a few pixels every few minutes to protect the screen.',
+  orbitStars: 'Twinkling stars on the Orbit clock.',
+  volume: 'The old three-step loudness. The Sounds and Voice levels (0–10) are under Sounds below.',
+  gentleAlarms: 'Alarms and timers start soft and grow louder.',
+  startupChime: 'A short chime when DeskMate starts.',
+  hourlyChime: 'A soft chime on the hour.',
+  alarmSound: 'Let alarms make sound (they always show).',
+  timerSound: 'Let timers make sound.',
+  reminderSound: 'Let task reminders make sound.',
+  snoozeMinutes: 'How long a snooze lasts.',
+  quiet: 'Mutes sounds. Alerts still show on the screen.',
+  night: 'Dims the screen between the night hours.',
+  nightMute: 'Also silences sounds during the night hours.',
+  nightStart: 'When night mode begins.',
+  nightEnd: 'When night mode ends.',
+  presence: 'Uses the distance sensor to tell when you are at the desk.',
+  presenceCm: 'How close counts as at the desk.',
+  awayMinutes: 'Minutes away before the screen blanks.',
+  standMinutes: 'A reminder to stand up after this long sitting. 0 is off.',
+  autoPauseFocus: 'Pauses a focus session when you walk away.',
+  gestures: 'Wave a hand in front of the sensor to wake or go Home.',
+  knobReverse: 'Turn the other way to go forward.',
+  knobEdges: 'How many contact changes make one click. Most knobs: 4.',
+  knobDoubleMs: 'How quickly two clicks count as a double-click.',
+  knobAccel: 'Fast turns skip further in long lists.',
+  calendarChime: 'A soft chime 5 minutes before a timed event.',
+  waterMinutes: 'A reminder to drink water while you are at the desk.',
+  eyeBreaks: 'Every 20 minutes, look 20 feet away for 20 seconds.',
+  ntfy: 'Sends alerts to your phone through ntfy.sh.',
+  ntfyAlways: 'Also while you are at the desk (otherwise only when away).',
+  world1: 'A second time zone on the World clocks page.', world2: 'A third.', world3: 'A fourth.',
+  weather: 'Fetch the weather (Open-Meteo) for your latitude and longitude.',
+  latitude: 'Where DeskMate is: weather, sunrise and official warnings use it.',
+  longitude: 'Where DeskMate is: weather, sunrise and official warnings use it.',
+  feed: 'An RSS link for the news page.',
+  remote: 'The app at deskmate.local on your home Wi-Fi.',
+  relay: 'Reach DeskMate away from home through a relay. Off on a new device.',
+  ideUploads: 'Lets the Arduino IDE send software over Wi-Fi. Off on a new device.',
+  bluetooth: 'The media remote, presence phone and Bluetooth setup.',
+  homeVolume: 'On Home, turning the knob sets the volume of a paired device.',
+  phoneRange: 'How strong a phone signal counts as nearby.',
+  ha: 'Connect to Home Assistant over MQTT.',
+  haHost: 'The address of your Home Assistant broker.',
+  haPort: 'Usually 1883 (8883 with TLS).',
+  haUser: 'The Home Assistant user DeskMate signs in as.',
+  haTls: 'Use an encrypted connection to the broker.',
+  cloud: 'Link to Arduino Cloud.',
+  updateChecks: 'Look for new signed releases and offer them.',
+};
+let changedSet = new Set();
+function cardFor([title, fields]) {
+  const card = el('div', {class: 'card'}, el('h2', {}, el('span', {text: title})));
+  fields.forEach(([key, label, kind, a, b]) => {
+    if (prefs[key] === undefined && kind !== 'password' && kind !== 'calendar') return;
+    const mark = changedSet.has(key) ? el('i', {class: 'chg', title: 'Not at its default'}) : null;
+    const help = HELP[key] ? el('small', {class: 'help', text: HELP[key]}) : null;
+    let input;
+    if (kind === 'calendar') {
+      // The link is private: DeskMate keeps it and never sends it back, so only say whether one is saved.
+      input = el('input', {type: 'url', placeholder: prefs.calendarSet ? 'Saved. Paste a new link to replace it' : 'https://… or webcal://…', autocomplete: 'off'});
+      const remove = el('button', {class: 'small ghost', hidden: !prefs.calendarSet, text: 'Remove calendar', on: {click: () => saveSetting(key, '', null)}});
+      card.append(el('label', {}, label, input), remove,
+        el('small', {class: 'mute', text: 'Google: Settings → your calendar → Secret address in iCal format. iCloud: share the calendar as Public and copy its link. Outlook: Publish calendar → ICS.'}));
+      input.onchange = () => { if (input.value.trim()) { saveSetting(key, input.value.trim(), null); input.value = ''; setTimeout(loadSettings, 800); } };
+      return;
+    }
+    if (kind === 'zone') {
+      input = el('select');
+      input.append(el('option', {value: 0, text: 'None'}));
+      (zones || []).forEach(([city], i) => input.append(el('option', {value: i + 1, text: city})));
+      card.append(el('label', {}, label, mark, help, input));
+      input.onchange = () => saveSetting(key, +input.value, input);
+      setInput(input, prefs[key]);
+      return;
+    }
+    if (kind === 'toggle') {
+      input = el('input', {type: 'checkbox'});
+      card.append(el('div', {class: 'item'}, el('div', {class: 'main'}, label, mark, help), el('label', {class: 'switch'}, input, el('span'))));
+      input.onchange = () => saveSetting(key, input.checked, input);
+    } else if (kind === 'select') {
+      input = el('select');
+      const options = Array.isArray(a) ? a.map((t, v) => [v, t]) : Object.entries(a);
+      options.forEach(([v, t]) => input.append(el('option', {value: v, text: t})));
+      card.append(el('label', {}, label, mark, help, input));
+      input.onchange = () => saveSetting(key, +input.value, input);
+    } else {
+      input = el('input', {type: kind === 'decimal' ? 'number' : kind === 'password' ? 'password' : kind, step: kind === 'decimal' ? 'any' : undefined, min: a, max: b, 'data-kind': kind});
+      card.append(el('label', {}, label, mark, help, input));
+      input.onchange = () => {
+        const v = kind === 'number' || kind === 'decimal' ? +input.value : kind === 'time' ? readHHMM(input.value) : input.value;
+        if (kind === 'password' && !v) return;
+        saveSetting(key, v, input);
+        if (kind === 'password') input.value = '';
+      };
+    }
+    if (kind !== 'password') setInput(input, prefs[key]);
+  });
+  if (CARD_RESET[title]) {
+    card.append(el('button', {class: 'small ghost reset', type: 'button', text: 'Reset ' + title.toLowerCase(), on: {click: () => resetSection(CARD_RESET[title], title)}}));
+  }
+  return card;
+}
+// The marks on the cards that live in the page itself (Sounds, Heads-ups), from the preferences DeskMate keeps beside the settings.
+function markPrefs() {
+  const prefsChanged = new Set(prefs.changedPrefs || []);
+  const map = {sndTheme: 'sound-theme', sndVol: 'vol-levels', voiceVol: 'vol-levels', sndChirps: 'chirps', motionPreset: 'motion', headsMode: 'heads-up', headsSky: 'sky-events'};
+  Object.entries(map).forEach(([id, key]) => {
+    const row = byId(id) && byId(id).closest('label');
+    if (!row) return;
+    row.querySelectorAll('.chg').forEach(m => m.remove());
+    if (prefsChanged.has(key)) row.prepend(el('i', {class: 'chg', title: 'Not at its default'}));
+  });
+  const legend = byId('alertKinds').querySelector('legend');
+  legend.querySelectorAll('.chg').forEach(m => m.remove());
+  if (changedSet.has('alertKinds')) legend.append(el('i', {class: 'chg', title: 'Not at its default'}));
+}
 function renderSettings() {
   if (!prefs) return;
   const form = byId('settingsForm');
   if (document.activeElement && form.contains(document.activeElement)) return;  // Don't redraw under the cursor.
+  changedSet = new Set(prefs.changed || []);
+  byId('settingsHold').append(byId('soundsCard'), byId('headsCard'));   // Out of the way while the form is rebuilt.
   form.replaceChildren();
   form.classList.toggle('quiet', settingsShown);
   settingsShown = true;
-  SETTINGS.forEach(([title, fields]) => {
-    const card = el('div', {class: 'card'}, el('h2', {}, el('span', {text: title})));
-    fields.forEach(([key, label, kind, a, b]) => {
-      if (prefs[key] === undefined && kind !== 'password' && kind !== 'calendar') return;
-      let input;
-      if (kind === 'calendar') {
-        // The link is private: DeskMate keeps it and never sends it back, so only say whether one is saved.
-        input = el('input', {type: 'url', placeholder: prefs.calendarSet ? 'Saved. Paste a new link to replace it' : 'https://… or webcal://…', autocomplete: 'off'});
-        const remove = el('button', {class: 'small ghost', hidden: !prefs.calendarSet, text: 'Remove calendar', on: {click: () => saveSetting(key, '', null)}});
-        card.append(el('label', {}, label, input), remove,
-          el('small', {class: 'mute', text: 'Google: Settings → your calendar → Secret address in iCal format. iCloud: share the calendar as Public and copy its link. Outlook: Publish calendar → ICS.'}));
-        input.onchange = () => { if (input.value.trim()) { saveSetting(key, input.value.trim(), null); input.value = ''; setTimeout(loadSettings, 800); } };
-        return;
-      }
-      if (kind === 'zone') {
-        input = el('select');
-        input.append(el('option', {value: 0, text: 'None'}));
-        (zones || []).forEach(([city], i) => input.append(el('option', {value: i + 1, text: city})));
-        card.append(el('label', {}, label, input));
-        input.onchange = () => saveSetting(key, +input.value, input);
-        setInput(input, prefs[key]);
-        return;
-      }
-      if (kind === 'toggle') {
-        input = el('input', {type: 'checkbox'});
-        card.append(el('div', {class: 'item'}, el('div', {class: 'main', text: label}), el('label', {class: 'switch'}, input, el('span'))));
-        input.onchange = () => saveSetting(key, input.checked, input);
-      } else if (kind === 'select') {
-        input = el('select');
-        const options = Array.isArray(a) ? a.map((t, v) => [v, t]) : Object.entries(a);
-        options.forEach(([v, t]) => input.append(el('option', {value: v, text: t})));
-        card.append(el('label', {}, label, input));
-        input.onchange = () => saveSetting(key, +input.value, input);
-      } else {
-        input = el('input', {type: kind === 'decimal' ? 'number' : kind === 'password' ? 'password' : kind, step: kind === 'decimal' ? 'any' : undefined, min: a, max: b, 'data-kind': kind});
-        card.append(el('label', {}, label, input));
-        input.onchange = () => {
-          const v = kind === 'number' || kind === 'decimal' ? +input.value : kind === 'time' ? readHHMM(input.value) : input.value;
-          if (kind === 'password' && !v) return;
-          saveSetting(key, v, input);
-          if (kind === 'password') input.value = '';
-        };
-      }
-      if (kind !== 'password') setInput(input, prefs[key]);
+  const byTitle = Object.fromEntries(SETTINGS.map(c => [c[0], c]));
+  const used = new Set();
+  const addGroup = (name, cards) => {
+    const group = el('div', {class: 'sgroup', 'data-group': name});
+    cards.forEach(c => {
+      if (typeof c !== 'string') group.append(cardFor(c));
+      else if (c[0] === '#') group.append(byId(c.slice(1)));
+      else if (byTitle[c]) { used.add(c); group.append(cardFor(byTitle[c])); }
     });
-    form.append(card);
-  });
+    form.append(el('h3', {class: 'gh', 'data-group': name, text: name}), group);
+  };
+  GROUPS.forEach(([name, cards]) => addGroup(name, cards));
+  const rest = SETTINGS.filter(c => !used.has(c[0]));   // A setting not listed above still shows.
+  if (rest.length) addGroup('More', rest);
+  markPrefs();
   filterSettings();
 }
-// Search: keeps the cards (and, within them, the rows) that match.
+// Search: keeps the groups, cards and rows that match (the name of a group matches all of it; help text counts).
 function filterSettings() {
   const q = byId('settingsSearch').value.trim().toLowerCase();
   let shown = 0;
-  byId('settingsForm').querySelectorAll(':scope>.card').forEach(card => {
-    const titleHit = card.querySelector('h2').textContent.toLowerCase().includes(q);
-    let rows = 0;
-    card.querySelectorAll(':scope>label,:scope>.item').forEach(row => {
-      const hit = !q || titleHit || row.textContent.toLowerCase().includes(q);
-      row.style.display = hit ? '' : 'none';
-      rows += hit;
+  byId('settingsForm').querySelectorAll(':scope>.sgroup').forEach(group => {
+    const groupHit = (group.dataset.group || '').toLowerCase().includes(q);
+    let cards = 0;
+    group.querySelectorAll(':scope>.card').forEach(card => {
+      const titleHit = groupHit || card.querySelector('h2').textContent.toLowerCase().includes(q);
+      let rows = 0;
+      card.querySelectorAll(':scope>label,:scope>.item,:scope>fieldset,:scope>details').forEach(row => {
+        const hit = !q || titleHit || row.textContent.toLowerCase().includes(q);
+        row.style.display = hit ? '' : 'none';
+        rows += hit;
+      });
+      const show = !q || titleHit || rows > 0;
+      card.style.display = show ? '' : 'none';
+      cards += show;
     });
-    const show = !q || titleHit || rows > 0;
-    card.style.display = show ? '' : 'none';
-    shown += show;
+    group.style.display = cards ? '' : 'none';
+    if (group.previousElementSibling) group.previousElementSibling.style.display = cards ? '' : 'none';
+    shown += cards;
   });
-  byId('settingsEmpty').classList.toggle('hidden', shown > 0);
+  const reset = byId('resetCard');
+  const resetShown = !q || reset.textContent.toLowerCase().includes(q);
+  reset.style.display = resetShown ? '' : 'none';
+  byId('settingsEmpty').classList.toggle('hidden', shown > 0 || resetShown);
 }
+// ---- Reset (1.26) ----
+async function resetSection(section, label) {
+  if (!confirm('Reset ' + label.toLowerCase() + ' to its defaults? Nothing else changes.')) return;
+  try { await api('POST', '/settings/reset', {section, confirm: 'RESET'}); } catch (e) { toast(e.message); return; }
+  toast(label + ' reset');
+  soundsInfo = null;
+  await loadSettings(); loadSounds(); loadHeads();
+}
+byId('resetSounds').onclick = () => resetSection('sound', 'Sound');
+byId('resetAlerts').onclick = () => resetSection('alerts', 'Alerts');
+byId('resetAll').onclick = async () => {
+  const word = prompt('Put every setting back to its default?\n\nWi-Fi, your lists, pairings and location stay. IDE upload and the away relay turn off.\n\nType RESET to continue.');
+  if (word !== 'RESET') return;
+  try { await api('POST', '/settings/reset', {section: 'all', confirm: 'RESET'}); } catch (e) { toast(e.message); return; }
+  toast('Settings reset');
+  soundsInfo = null;
+  await loadSettings(); loadSounds(); loadHeads();
+};
+byId('factoryReset').onclick = async () => {
+  if (!confirm('Factory reset erases everything DeskMate keeps (Wi-Fi, pairings, alarms, tasks, notes, My sounds, settings) and restarts it as new.\n\nYou will have to click Erase on DeskMate itself to finish. Continue?')) return;
+  let token;
+  try { token = (await api('GET', '/factory-reset/token')).token; } catch (e) { toast(e.message); return; }
+  const word = prompt('Type FACTORY RESET to ask DeskMate to erase itself. You have 30 seconds.');
+  if (word !== 'FACTORY RESET') return;
+  try { await api('POST', '/factory-reset', {confirm: word, token}); } catch (e) { toast(e.message); return; }
+  toast("Now click Erase on DeskMate's screen to finish.");
+};
 byId('settingsSearch').addEventListener('input', () => { byId('settingsForm').classList.add('quiet'); filterSettings(); });
 
 // ---- Network, phone link, update, log ----
@@ -1207,6 +1351,16 @@ async function loadHeads() {
   byId('headsMode').value = info.mode;
   byId('headsMode').onchange = e => api('POST', '/headsups', {mode: +e.target.value}).then(() => toast('Saved')).catch(x => toast(x.message));
   byId('headsSky').checked = info.sky;
+  const kinds = byId('alertKinds');
+  kinds.querySelectorAll('input[data-bit]').forEach(box => {
+    box.checked = (info.kinds & +box.dataset.bit) !== 0;
+    box.onchange = () => {
+      let mask = 0;
+      kinds.querySelectorAll('input[data-bit]').forEach(b => { if (b.checked) mask |= +b.dataset.bit; });
+      if (mask === 0 && !confirm('Switch off every warning type? Windows still show, but no warning will sound.')) { box.checked = true; return; }
+      api('POST', '/settings', {alertKinds: mask}).then(() => toast('Saved')).catch(x => { toast(x.message); loadHeads(); });
+    };
+  });
   byId('headsSky').onchange = e => api('POST', '/headsups', {sky: e.target.checked}).then(() => toast('Saved')).catch(x => toast(x.message));
   const list = byId('noticeList'); list.replaceChildren();
   if (!info.notices.length) list.append(el('p', {class: 'mute', text: 'Nothing yet today.'}));

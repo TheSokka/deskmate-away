@@ -1,7 +1,7 @@
 {
-  "version": "1.17.3",
-  "size": 2036397,
-  "sha256": "42cb3b7017c24a98093d2e14f461f9898213c7b747ae48c061f17424aee4383a",
-  "url": "DeskMateOS-1.17.3.bin",
-  "notes": "Screen-aware Ask DeskMate, timer adjustments with undo, and calendar-aware work timers with on-screen confirmation."
+  "version": "1.48.0",
+  "size": 2335117,
+  "sha256": "7f2ba68b7d55e51b449f04a3130b9e2c4dd3aacff078566ac8cea23341f46333",
+  "url": "DeskMateOS-1.48.0.bin",
+  "notes": "New System menu, Control Center on a double-click, smoother Max motion and refreshed sounds."
 }
