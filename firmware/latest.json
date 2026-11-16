@@ -1,7 +1,7 @@
 {
-  "version": "1.48.0",
-  "size": 2335117,
-  "sha256": "7f2ba68b7d55e51b449f04a3130b9e2c4dd3aacff078566ac8cea23341f46333",
-  "url": "DeskMateOS-1.48.0.bin",
-  "notes": "New System menu, Control Center on a double-click, smoother Max motion and refreshed sounds."
+  "version": "1.55",
+  "size": 2379597,
+  "sha256": "3ba34f4ab65a77d2b9fe0c635883e91e8345f3426589f5a74adfdb7309c3809c",
+  "url": "DeskMateOS-1.55.bin",
+  "notes": "Leaner firmware, five sound styles with a sonic logo and ambient sound, smooth type, simpler motion, Showcase mode, and VL53L1X presence support."
 }
