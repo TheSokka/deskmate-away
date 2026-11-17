@@ -1,7 +1,7 @@
 {
-  "version": "1.56",
-  "size": 2378333,
-  "sha256": "638754146c82829215ff65302c2ebd7982e4c22e4ba59e71c3b12eaf907149db",
-  "url": "DeskMateOS-1.56.bin",
-  "notes": "Voice setup from the app (your OpenAI key or local AI, no USB), 12-hour time, quicker and calmer motion, update checks every minute."
+  "version": "26.11",
+  "size": 2440076,
+  "sha256": "27236a45394bb8641af4a44b1ca76ff13e861b98329d8517394116ca08002ed9",
+  "url": "DeskMateOS-26.11.bin",
+  "notes": "Personal Home cards, recurring reminders, comfort controls and rain heads-ups. Character only at startup."
 }
