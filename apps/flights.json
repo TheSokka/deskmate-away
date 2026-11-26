@@ -1,0 +1,39 @@
+{
+  "id": "flights",
+  "name": "Flights",
+  "summary": "Planes flying over you right now, and your own flight: its route and where it is.",
+  "version": 1,
+  "icon": "plane",
+  "color": "#4a8fe7",
+  "domains": ["api.adsb.lol", "api.adsbdb.com"],
+  "settings": [
+    {"key": "flight", "label": "Your flight", "placeholder": "WN3980", "upper": true}
+  ],
+  "sources": {
+    "near": "https://api.adsb.lol/v2/point/{lat}/{lon}/20",
+    "route": "https://api.adsbdb.com/v0/callsign/{setting.flight}",
+    "live": "https://api.adsb.lol/v2/callsign/{route:response.flightroute.callsign_icao}"
+  },
+  "refresh": 2,
+  "subtitle": {"template": "{near:total} planes near you"},
+  "pages": [
+    {"title": "Overhead", "widgets": [
+      {"type": "big", "title": "Aircraft within 20 nm", "path": "near:total"},
+      {"type": "list", "rows": "near:ac", "sortBy": "dst", "max": 4,
+       "titlePath": {"template": "{flight}  {t}"},
+       "detailPath": {"path": "alt_baro", "unit": "ft"},
+       "valuePath": {"path": "dst", "digits": 0, "unit": "nm"}}
+    ]},
+    {"title": "My flight", "widgets": [
+      {"type": "big", "needs": "flight", "title": "{setting.flight}, scheduled route",
+       "template": "{route:response.flightroute.origin.iata_code} → {route:response.flightroute.destination.iata_code}",
+       "text": "Add your flight number in the DeskMate app: Settings, Apps, App Store, Flights."},
+      {"type": "text", "needs": "flight",
+       "template": "{route:response.flightroute.airline.name}: {route:response.flightroute.origin.municipality} to {route:response.flightroute.destination.municipality}"},
+      {"type": "tiles", "needs": "flight", "items": [
+        {"label": "Altitude", "path": "live:ac[0].alt_baro", "unit": "ft"},
+        {"label": "Speed", "path": "live:ac[0].gs", "unit": "kt"},
+        {"label": "Heading", "template": "{live:ac[0].track}°"}]}
+    ]}
+  ]
+}
