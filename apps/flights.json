@@ -2,7 +2,7 @@
   "id": "flights",
   "name": "Flights",
   "summary": "Planes flying over you right now, and your own flight: its route and where it is.",
-  "version": 1,
+  "version": 2,
   "icon": "plane",
   "color": "#4a8fe7",
   "domains": ["api.adsb.lol", "api.adsbdb.com"],
@@ -15,7 +15,7 @@
     "live": "https://api.adsb.lol/v2/callsign/{route:response.flightroute.callsign_icao}"
   },
   "refresh": 2,
-  "subtitle": {"template": "{near:total} planes near you"},
+  "subtitle": {"template": "{near:total} overhead now"},
   "pages": [
     {"title": "Overhead", "widgets": [
       {"type": "big", "title": "Aircraft within 20 nm", "path": "near:total"},
