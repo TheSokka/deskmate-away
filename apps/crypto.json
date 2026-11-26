@@ -1,0 +1,27 @@
+{
+  "id": "crypto",
+  "name": "Crypto",
+  "summary": "Bitcoin, Ethereum and Solana in US dollars, with the day's change.",
+  "version": 1,
+  "icon": "chart",
+  "color": "#f2a33a",
+  "domains": ["api.coingecko.com"],
+  "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true",
+  "refresh": 15,
+  "subtitle": {"label": "BTC $", "path": "bitcoin.usd"},
+  "pages": [
+    {"title": "Prices", "widgets": [
+      {"type": "big", "title": "Bitcoin, US dollars", "path": "bitcoin.usd", "unit": "USD"},
+      {"type": "tiles", "items": [
+        {"label": "Ethereum", "path": "ethereum.usd", "unit": "USD"},
+        {"label": "Solana", "path": "solana.usd", "unit": "USD", "digits": 2}]}
+    ]},
+    {"title": "24 h change", "widgets": [
+      {"type": "tiles", "items": [
+        {"label": "Bitcoin", "path": "bitcoin.usd_24h_change", "format": "percent", "digits": 1},
+        {"label": "Ethereum", "path": "ethereum.usd_24h_change", "format": "percent", "digits": 1},
+        {"label": "Solana", "path": "solana.usd_24h_change", "format": "percent", "digits": 1}]},
+      {"type": "text", "text": "Prices from CoinGecko, every 15 minutes while open."}
+    ]}
+  ]
+}

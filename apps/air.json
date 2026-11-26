@@ -1,0 +1,33 @@
+{
+  "id": "air",
+  "name": "Air quality",
+  "summary": "Air quality where you are: AQI, particles, ozone and the next 24 hours.",
+  "version": 1,
+  "icon": "cloud",
+  "color": "#3fb68b",
+  "domains": ["air-quality-api.open-meteo.com"],
+  "url": "https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi,pm2_5,pm10,ozone,uv_index&hourly=us_aqi&forecast_hours=24&timezone=auto",
+  "refresh": 30,
+  "subtitle": {"label": "AQI", "path": "current.us_aqi"},
+  "pages": [
+    {"title": "Now", "widgets": [
+      {"type": "big", "title": "US air quality index", "path": "current.us_aqi",
+       "levels": [
+         {"upTo": 50, "label": "Good", "tone": "green"},
+         {"upTo": 100, "label": "Moderate", "tone": "amber"},
+         {"upTo": 150, "label": "Sensitive groups", "tone": "orange"},
+         {"upTo": 200, "label": "Unhealthy", "tone": "red"},
+         {"upTo": 300, "label": "Very unhealthy", "tone": "violet"},
+         {"upTo": 9999, "label": "Hazardous", "tone": "red"}]},
+      {"type": "tiles", "items": [
+        {"label": "PM2.5", "path": "current.pm2_5", "unit": "µg"},
+        {"label": "PM10", "path": "current.pm10", "unit": "µg"},
+        {"label": "Ozone", "path": "current.ozone", "unit": "µg"},
+        {"label": "UV", "path": "current.uv_index", "digits": 1}]}
+    ]},
+    {"title": "Next 24 h", "widgets": [
+      {"type": "chart", "title": "AQI by the hour", "series": "hourly.us_aqi", "labels": "hourly.time", "style": "bars"},
+      {"type": "text", "text": "Under 50 is good; over 100 is unhealthy for sensitive groups."}
+    ]}
+  ]
+}

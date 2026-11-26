@@ -1,0 +1,31 @@
+{
+  "id": "quakes",
+  "name": "Earthquakes",
+  "summary": "The latest earthquakes of magnitude 4.5 and up around the world, from USGS.",
+  "version": 1,
+  "icon": "globe",
+  "color": "#d9644a",
+  "domains": ["earthquake.usgs.gov"],
+  "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=4.5&orderby=time&limit=8",
+  "refresh": 15,
+  "subtitle": {"label": "Latest M", "path": "features[0].properties.mag", "digits": 1},
+  "pages": [
+    {"title": "Latest", "widgets": [
+      {"type": "big", "title": "Latest magnitude", "path": "features[0].properties.mag", "digits": 1,
+       "levels": [
+         {"upTo": 4.9, "label": "Light", "tone": "teal"},
+         {"upTo": 5.9, "label": "Moderate", "tone": "amber"},
+         {"upTo": 6.9, "label": "Strong", "tone": "orange"},
+         {"upTo": 7.9, "label": "Major", "tone": "red"},
+         {"upTo": 99, "label": "Great", "tone": "violet"}]},
+      {"type": "text", "path": "features[0].properties.place"},
+      {"type": "text", "path": "features[0].properties.time", "format": "ago"}
+    ]},
+    {"title": "Recent", "widgets": [
+      {"type": "list", "rows": "features", "max": 8,
+       "titlePath": "properties.place",
+       "detailPath": {"path": "properties.time", "format": "ago"},
+       "valuePath": {"path": "properties.mag", "digits": 1}}
+    ]}
+  ]
+}
